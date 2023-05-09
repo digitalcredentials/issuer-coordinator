@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "lib": ["es2022", "dom"],
+    "module": "es6",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "noImplicitAny": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "baseUrl": ".",
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "ts-node": {
+    "files": true
+  },
+  "include": [
+    "src/**/*",
+    ".eslintrc.js",
+    "karma.conf.js"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
