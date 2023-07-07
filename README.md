@@ -20,13 +20,13 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 	- [Set Signing Key](#set-signing-key)
   - [Add Tenants](#add-tenants)
     - [Add a Tenant Seed](#add-a-tenant-seed)
-	- [Declare Tenant Endpoints](#protecting-tenant-endpoints)
+	- [Declare Tenant Endpoints](#declare-tenant-endpoints)
     - [Tenants Example](#tenants-example)
   - [Enable Revocation](#enable-revocation)
   - [DID Registries](#did-registries)
-  - [did:key](#did-key)
-  - [did:web](#did-web)
-  - [Revocation](#revocation)
+  - [did:key](#didkey)
+  - [did:web](#didweb)
+  - [Revoking](#revoking)
 - [Usage](#usage)
   - [Issuing](#issuing)
   - [Revoking](#revoking)
@@ -35,10 +35,6 @@ Note that you needn't clone this repository to use the issuer - you can simply r
   - [Testing](#testing)
 - [Contribute](#contribute)
 - [License](#license)
-
-- [Updating With New Releases](#updating)
-
-
 
 ## Summary
 
