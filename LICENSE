@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2022 Digital Credentials Consortium
+Copyright (c) 2023 Digital Credentials Consortium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
