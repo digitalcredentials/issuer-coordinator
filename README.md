@@ -94,9 +94,9 @@ There are a few things you'll want to configure, in particular setting your own 
 
 The app is configured with three .env files:
 
-[.coordinator.env](./.coordinator.env)
-[.signing-service.env](./.signer.env)
-[.status-service.env](./.signer.env)
+* [.coordinator.env](./.coordinator.env)
+* [.signing-service.env](./.signer.env)
+* [.status-service.env](./.signer.env)
 
 If you've used the QuickStart docker-compose.yml, then you'll have to point it at these files. We've pre-configured this [docker-compose.yml](./docker-compose.yml), though, so you can just use that.
 
@@ -355,6 +355,13 @@ This should return a fully formed and signed credential printed to the terminal,
 			}
 		}
 	},
+	"credentialStatus": {
+        "id": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16",
+        "type": "StatusList2021Entry",
+        "statusPurpose": "revocation",
+        "statusListIndex": 16,
+        "statusListCredential": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4"
+    },
 	"proof": {
 		"type": "Ed25519Signature2020",
 		"created": "2023-05-19T14:47:25Z",
@@ -365,19 +372,41 @@ This should return a fully formed and signed credential printed to the terminal,
 }
 ```
 
+NOTE: the `credentialStatus` section will only have been added if you enabled revocation.
+
 NOTE: CURL can get a bit clunky if you want to experiment, so you might consider trying [Postman](https://www.postman.com/downloads/) which makes it very easy to construct and send http calls.
 
 ### Revoking
 
-Revocation is more fully explained in the StatusList2021 specification and the DCC [git status repo implemenation](https://github.com/digitalcredentials/status-list-manager-git), but it amounts to POSTing an object to the revocation endpoint, like so:
+Revocation is more fully explained in the StatusList2021 specification and the DCC [git based status implemenation](https://github.com/digitalcredentials/credential-status-manager-git), but it amounts to POSTing an object to the revocation endpoint, like so:
 
 ```
-{credentialId: '23kdr', credentialStatus: [{type: 'StatusList2021Credential', status: 'revoked'}]}
+{
+	credentialId: 'id_added_by_status_manager_to_credentialStatus_propery_of_VC',
+	credentialStatus: [{
+		type: 'StatusList2021Credential',
+		status: 'revoked'
+	}]
+}
 ```
 
-Fundamentally, you are just posting up the id of the credential.
+The important part there is the `credentialId`, which is listed in the `credentialStatus` section of the issued credential (`credentialStatus` is added by the status service), and which you have to store at the point when you issue the credential. The `credentialStatus` section looks like this:
 
-NOTE: you'll have to have [set up revocation](#enable-revocation) for this to work. If you've only done the QuickStart then you'll not be able to revoke.
+```
+"credentialStatus": {
+        "id": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16",
+        "type": "StatusList2021Entry",
+        "statusPurpose": "revocation",
+        "statusListIndex": 16,
+        "statusListCredential": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4"
+    }
+```
+
+and the id you need is in the `id` property.
+
+So again, an important point here is that you must store the credentialStatus.id for all credentials that you issue. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the id you need by searching the other fields like student name or student id.
+
+NOTE: you'll of course have to have [set up revocation](#enable-revocation) for this to work. If you've only done the QuickStart then you'll not be able to revoke.
 
 ## Learner Credential Wallet
 
