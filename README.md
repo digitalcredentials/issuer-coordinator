@@ -267,10 +267,10 @@ The did:web implementation is likely where most implementations will end up, and
 
 ### Issuing
 
-All right, now that you've got everything installed, you can start issuing cryptographically signed credentials.  Try it out with this CURL command, which you simply paste into the terminal:
+All right, now that you've got everything installed, you can start issuing cryptographically signed credentials.  Try it out with this CURL command, which you simply paste into the terminal, and which uses the default tenant:
 
 ```
-curl --location 'http://localhost:3000/instance/default/credentials/issue' \
+curl --location 'http://localhost:4005/instance/default/credentials/issue' \
 --header 'Content-Type: application/json' \
 --data-raw '{ 
   "@context": [
@@ -289,7 +289,7 @@ curl --location 'http://localhost:3000/instance/default/credentials/issue' \
     "description": "A test DID used to issue test credentials",
     "url": "https://digitalcredentials.mit.edu",
     "image": {
-	    "id": "https://certificates.cs50.io/static/success.jpg",
+	    "id": "https://user-images.githubusercontent.com/947005/133544904-29d6139d-2e7b-4fe2-b6e9-7d1022bb6a45.png",
 	    "type": "Image"
 	  }	
   },
@@ -308,7 +308,7 @@ curl --location 'http://localhost:3000/instance/default/credentials/issue' \
       	"description": "DCC congratulates you on your successful installation of the DCC Issuer.", 
       	"name": "Successful Installation",
       	"image": {
-	    	"id": "https://certificates.cs50.io/static/success.jpg",
+	    	"id": "https://user-images.githubusercontent.com/752326/214947713-15826a3a-b5ac-4fba-8d4a-884b60cb7157.png",
 	    	"type": "Image"
 	  	}
       }
