@@ -167,7 +167,7 @@ and replace the 'generate' value for the TENANT_SEED_DEFAULT with your new seed 
 
 `TENANT_SEED_DEFAULT=z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6`
 
-Once your key is set, you can test it as described in [Usage](usage).
+Once your key is set, you can test it as described in [Usage](#usage).
 
 Note that this sets a key for the default tenant, but you can set up as many tenants as you like as explained in the [Add Tenants](#tenants) section. 
 
