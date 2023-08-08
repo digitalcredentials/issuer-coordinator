@@ -7,7 +7,7 @@ function AuthorizationException(code, message) {
 
 export default async function verifyAuthHeader(authHeader, tenantName) {
 
-    try {
+
         console.log("tenant name: ")
         console.log(tenantName)
         const tenantToken = getTenantToken(tenantName)
@@ -33,8 +33,5 @@ export default async function verifyAuthHeader(authHeader, tenantName) {
         }
 
         return true
-    } catch (e) {
-        console.log(e)
-        throw new AuthorizationException(500, 'Internal Server Error - unknown error during authorization')
-    }
+    
 }
