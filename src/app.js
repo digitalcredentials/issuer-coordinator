@@ -92,8 +92,11 @@ export async function build(opts = {}) {
         async (req, res, next) => {
             if (!enableStatusService) return res.status(405).send("The status service has not been enabled.")  
             try {
-                await verifyAccess(req.headers.authorization, req.params.tenantName)
-                const updateResult = await callService(`http://${statusServiceEndpoint}/instance/${tenantName}/credentials/sign`, vcWithStatus)
+                const tenantName = req.params.tenantName //the issuer instance/tenant with which to sign
+                const authHeader = req.headers.authorization
+                const statusUpdate = req.body
+                await verifyAuthHeader(authHeader, tenantName)
+                const updateResult = await callService(`http://${statusServiceEndpoint}/credentials/status`, statusUpdate)
                 return res.json(updateResult)
             } catch (error) {
                 // have to catch and forward async errors to middleware:

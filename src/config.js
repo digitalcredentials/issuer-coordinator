@@ -1,7 +1,9 @@
 let CONFIG;
 const defaultPort = 4005
-const defaultTenantName = "default"
-const defaultTenantValue = "UNPROTECTED"
+const defaultTenantName = "test"
+const randomTenantName = "random"
+const randtomTenantToken = "UNPROTECTED"
+const defaultTenantToken = "UNPROTECTED"
 
 const defaultStatusServiceEndpoint = "STATUS:4008"
 const defaultSigningServiceEndpoint = "SIGNER:4006"
@@ -12,13 +14,17 @@ const defaultSigningServiceEndpoint = "SIGNER:4006"
 
 // we set a default tenant
 // It will be overwritten by whatever value is set for default in .env
-const TENANT_ACCESS_TOKENS = {[defaultTenantName]: defaultTenantValue}
+const TENANT_ACCESS_TOKENS = {}
 
 export function initializeConfig() {
   CONFIG = parseConfig();
 }
 
 function parseTenantTokens() {
+  // first add default so it can be overridden by env
+  TENANT_ACCESS_TOKENS[defaultTenantName] = defaultTenantToken
+  // also add the 'random' tenant
+  TENANT_ACCESS_TOKENS[randomTenantName] = randtomTenantToken
   const allEnvVars = process.env;
   const tenantKeys = Object.getOwnPropertyNames(allEnvVars)
     .filter(key => key.toUpperCase().startsWith('TENANT_TOKEN_')) 
@@ -60,6 +66,8 @@ export function getTenantToken(tenantName) {
   if (! Object.keys(TENANT_ACCESS_TOKENS).length) {
      parseTenantTokens()
   }
+  console.log("the token list:")
+  console.log(TENANT_ACCESS_TOKENS)
   if (TENANT_ACCESS_TOKENS.hasOwnProperty(tenantName)) {
     return TENANT_ACCESS_TOKENS[tenantName];
   } else {

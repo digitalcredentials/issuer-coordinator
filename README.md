@@ -8,20 +8,17 @@ An express app that signs Verifiable Credentials. The app coordinates calls to a
 
 Try it in five minutes or less with our [Quick Start](#quick-start).
 
-Note that you needn't clone this repository to use the issuer - you can simply run the provided docker-compose file, which pulls images from DockerHub. 
+Note that you needn't clone this repository to use the issuer - you can simply run the provided docker-compose file, which pulls pre-built images from DockerHub. 
 
 ## Table of Contents
 
 - [Summary](#summary)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-  - [Change Default Signing Key](#set-signing-key)
-    - [Generate a New Key](#generate-a-new-key)
-	- [Set Signing Key](#set-signing-key)
-  - [Add Tenants](#add-tenants)
-    - [Add a Tenant Seed](#add-a-tenant-seed)
-	- [Declare Tenant Endpoints](#declare-tenant-endpoints)
-    - [Tenants Example](#tenants-example)
+  - [Generate a New Key](#generate-a-new-key)
+  - [Tenants](#add-tenants)
+    - [Add a Tenant ](#add-a-tenant)
+	- [Use a Tenant](#use-a-tenant)
   - [Enable Revocation](#enable-revocation)
   - [DID Registries](#did-registries)
   - [did:key](#didkey)
@@ -47,7 +44,7 @@ Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) http endpoints:
 
 We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
 
-In particular, we've separated the typical parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and to *wire* together to add functionality. The apps are wired together in a simple docker compose network that pulls images from DockerHub.
+In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and to *wire* together to compose functionality. The apps are wired together in a simple docker compose network that pulls images from DockerHub.
 
 We've made installation a gradual process starting with a simple version that can be up and running in about three minutes, and then progressing with configuration as needed.
 
@@ -82,15 +79,114 @@ From the terminal in the same directory that contains your docker-compose.yml fi
 
 ### Issue
 
-Issue credentials, by posting to the endpoint as described in the [Usage section](#usage)
+Issue cryptographhically signed credentials by posting unsigned verifiable credentials to the issue endpoint, which signs the credential and returns it. Try out your test issuer with this CURL command, which you simply paste into the terminal:
+
+```
+curl --location 'http://localhost:4005/instance/test/credentials/issue' \
+--header 'Content-Type: application/json' \
+--data-raw '{ 
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context.json"
+  ],
+  "id": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1", 
+  "type": [
+    "VerifiableCredential",
+    "OpenBadgeCredential"
+  ],
+  "issuer": {
+    "id": "the issuer code will set this as the issuing DID", 
+    "type": "Profile",
+    "name": "DCC Test Issuer",
+    "description": "A test DID used to issue test credentials",
+    "url": "https://digitalcredentials.mit.edu",
+    "image": {
+	    "id": "https://certificates.cs50.io/static/success.jpg",
+	    "type": "Image"
+	  }	
+  },
+  "issuanceDate": "2020-01-01T00:00:00Z", 
+  "expirationDate": "2025-01-01T00:00:00Z",
+  "name": "Successful Installation",
+  "credentialSubject": {
+      "type": "AchievementSubject",
+     "name": "Me!",
+     "achievement": {
+      	"id": "http://digitalcredentials.mit.edu",
+      	"type": "Achievement",
+      	"criteria": {
+        	"narrative": "Successfully installed the DCC issuer."
+      	},
+      	"description": "DCC congratulates you on your successful installation of the DCC Issuer.", 
+      	"name": "Successful Installation",
+      	"image": {
+	    	"id": "https://certificates.cs50.io/static/success.jpg",
+	    	"type": "Image"
+	  	}
+      }
+  	}
+}'
+```
+
+This should return a fully formed and signed credential printed to the terminal, that should look something like this (it will be all smushed up, but you can format it in something like [json lint](https://jsonlint.com):
+
+```
+{
+	"@context": ["https://www.w3.org/2018/credentials/v1", "https://purl.imsglobal.org/spec/ob/v3p0/context.json", "https://w3id.org/vc/status-list/2021/v1", "https://w3id.org/security/suites/ed25519-2020/v1"],
+	"id": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1",
+	"type": ["VerifiableCredential", "OpenBadgeCredential"],
+	"issuer": {
+		"id": "did:key:z6Mkf2rgv7ef8FmLJ5Py87LMa7nofQgv6AstdkgsXiiCUJEy",
+		"type": "Profile",
+		"name": "DCC Test Issuer",
+		"description": "A test DID used to issue test credentials",
+		"url": "https://digitalcredentials.mit.edu",
+		"image": {
+			"id": "https://certificates.cs50.io/static/success.jpg",
+			"type": "Image"
+		}
+	},
+	"issuanceDate": "2020-01-01T00:00:00Z",
+	"expirationDate": "2025-01-01T00:00:00Z",
+	"name": "Successful Installation",
+	"credentialSubject": {
+		"type": "AchievementSubject",
+		"name": "Me!",
+		"achievement": {
+			"id": "http://digitalcredentials.mit.edu",
+			"type": "Achievement",
+			"criteria": {
+				"narrative": "Successfully installed the DCC issuer."
+			},
+			"description": "DCC congratulates you on your successful installation of the DCC Issuer.",
+			"name": "Successful Installation",
+			"image": {
+				"id": "https://certificates.cs50.io/static/success.jpg",
+				"type": "Image"
+			}
+		}
+	}
+	"proof": {
+		"type": "Ed25519Signature2020",
+		"created": "2023-05-19T14:47:25Z",
+		"verificationMethod": "did:key:z6Mkf2rgv7ef8FmLJ5Py87LMa7nofQgv6AstdkgsXiiCUJEy#z6Mkf2rgv7ef8FmLJ5Py87LMa7nofQgv6AstdkgsXiiCUJEy",
+		"proofPurpose": "assertionMethod",
+		"proofValue": "zviQazCEMihts4e6BrhxkEu5VbCPFqTFLY5qBkiRztf3eq1vXYXUCQrTL6ohxmMrsAPEJpB9WGbN1NH5DsSDHsCU"
+	}
+}
+```
 
 WARNING: DO NOT USE THIS TO ISSUE `REAL` CREDENTIALS UNTIL YOU'VE [SET YOUR OWN SIGNING KEY](#signing-key)
 
+NOTE: CURL can get a bit clunky if you want to experiment, so you might consider trying [Postman](https://www.postman.com/downloads/) which makes it very easy to construct and send http calls.
+
 NOTE: Revocation is not enabled in the Quick Start. You've got to setup a couple of thigs to [ENABLE REVOCATION](#create-github-repositories).
+
+Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production).
 
 ## Configuration
 
-There are a few things you'll want to configure, in particular setting your own signing keys (so that only you can sign your credentials). Other options include enabling revocation, or allowing for 'multi-tenant' signing, which you might use, for example, to sign credentials for different courses with a different key.
+There are a few things you'll want to configure, in particular setting your own signing keys (so that only you can sign your credentials). Other options include enabling revocation, and allowing for 'multi-tenant' signing, which you might use, for example, to sign credentials for different courses with a different key.
 
 The app is configured with three .env files:
 
@@ -98,15 +194,11 @@ The app is configured with three .env files:
 * [.signing-service.env](./.signer.env)
 * [.status-service.env](./.signer.env)
 
-If you've used the QuickStart docker-compose.yml, then you'll have to point it at these files. We've pre-configured this [docker-compose.yml](./docker-compose.yml), though, so you can just use that.
+If you've used the QuickStart docker-compose.yml, then you'll have to change it a bit to point at these files. Alternatively, we've pre-configured this [docker-compose.yml](./docker-compose.yml), though, so you can just use that.
 
-### Change Default Signing key
+The issuer is pre-configured with a preset signing key for testing that can only be used for testing and evaluation. Any credentials signed with this key are meaningless because anyone else can use it to sign credentials, and so could create fake copies of your credentials which would appear to be properly signed. There would be no way to know that it was fake. So, you'll want to add our own key which you do by generating a new key and setting it for a new tenant name.
 
-The issuer is pre-configured with a default signing key that can only be used for testing and evaluation. Any credentials signed with this key are meaningless because anyone else can use it to sign credentials, and so could create fake copies of your credentials which would appear to be properly signed. There would be no way to know that it was fake.
-
-TODO: may want to by default auto-generate an ephemeral key on startup, that only lasts for the life of the process. Upside is that it wouldn't validate in any registry and so would force people to generate and set their own key. Downside is that credentials wouldn't validate, and so wouldn't demonstrate that functionality, but on the hand, would demonstrate failed verification.
-
-#### Generate a new key
+### Generate a new key
 
 To issue your own credentials you must generate your own signing key and keep it private.  We've tried to make that a little easier by providing a convenience endpoint in the issuer that you can use to generate a brand new key.  You can hit the endpoint with the following CURL command (in a terminal):
 
@@ -147,74 +239,79 @@ The returned result will look something like this:
 }
 ```
 
-Now that you've got your key you'll want to set it...
+Now that you've got your key you'll want to enable it by adding a new tenant to use the seed...
 
-#### Set Signing Key
-
-Signing keys are set as 'seeds' in the [.signer.env](.signer.env) file for the signer-service. 
-
-The default signing key is set as:
-
-`TENANT_SEED_DEFAULT=generate`
-
-The 'generate' value means that a new random seed is generated everytime the app starts. The seed only exists for the life of the process. This is fine for experimentation, but to issue credentials whose issuer can be verified you need a permanent key that you can add to a trusted registry. The registry certifies that the key really does belong to the claimed issuer. A verifier checks the registry when verifying a credential.
-
-So, take the value of the 'seed' property for the key you generated, which from the example above would be:
-
-`"seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6"`
-
-and replace the 'generate' value for the TENANT_SEED_DEFAULT with your new seed value, like so:
-
-`TENANT_SEED_DEFAULT=z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6`
-
-Once your key is set, you can test it as described in [Usage](#usage).
-
-Note that this sets a key for the default tenant, but you can set up as many tenants as you like as explained in the [Add Tenants](#tenants) section. 
-
-### Add Tenants
+### Tenants
 
 You might want to allow more than one signing key/DID to be used with the issuer. For example, you might want to sign university/college degree diplomas with a DID that is only used by the registrar, but also allow certificates for individual courses to be signed by by different DIDS that are owned by the faculty or department or even the instructors that teach the courses.
 
 We're calling these differents signing authorities 'tenants'.  
 
-#### Add a Tenant Seed
+#### Add a Tenant
 
-Adding a tenant is simple. Just add another `TENANT_SEED_{TENANT_NAME}` environment variable in [.signer.env](.signer.env). The value of the variable should be a seed. Generate a new seed as explained in [Generate a new key](#generate-a-new-key), and set it as explained for the default tenant in [Set Signing Key](#set-signing-key).
+Adding a tenant amounts to adding one line each to 
 
-#### Declare Tenant Endpoints
+* [.coordinator.env](.coordinator.env)
+* [.signer.env](.signer.env)
 
-Tenant endpoints must be add to [.coordinator.env](.coordinator.env) and given a value of either 'UNPROTECTED' or some arbitrary value of your choosing (like a UUID). If you set a value other than UNPROTECTED then that value must be included as a Bearer token in the Authorization header of any calls to the endpoint.
+##### .coordinator.env
+
+Add a line like:
+
+```
+TENANT_TOKEN_{TENANT_NAME}={TOKEN}
+```
+
+Replace `{TENANT_NAME}` with your new tenant name, and `{TOKEN}` with an authentication token to protect your endpoint.
+
+For example:
+
+```
+TENANT_TOKEN_ECON101=988DKLAJH93KDSFV
+```
+
+The token can be anything you like (e.g. a UUID). To leave the endpoint unprotected, set the token value to  'UNPROTECTED', e.g.,
+
+```
+TENANT_SEED_ECON101=UNPROTECTED
+```
+
+If you set a value other than UNPROTECTED then that value must be included as a Bearer token in the Authorization header of any calls to the endpoint.
 
 We also suggest using IP filtering on your endpoints to only allow set IPs to access the issuer.  Set filtering in your nginx or similar.
 
-Add a `TENANT_TOKEN_{TENANT_NAME}` environment variable to the [.coordinator.env](.coordinator.env) file.
+##### .signer.env
 
-#### Tenants Example
-
-To set up two tenants, one for degrees and one for completion of the Econ101 course, and you wanted to secure the degrees tenant but not the Econ101, then you could create the tenants by setting the following in the [.signer.env](.signer.env) file:
+Add a line like:
 
 ```
-TENANT_SEED_DEGREES=z1AoLPRWHSKasPH1unbY1A6ZFF2Pdzzp7D2CkpK6YYYdKTN
-TENANT_SEED_ECON101=Z1genK82erz1AoLPRWHSKZFF2Pdzzp7D2CkpK6YYYdKTNat
+TENANT_SEED_{TENANT_NAME}={SEED}
 ```
 
-and the following to the [.coordinator.env](.coordinator.env) file:
+For example:
 
 ```
-TENANT_TOKEN_DEGREE=988DKLAJH93KDSFV
+TENANT_SEED_ECON101=z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6
 ```
 
-The tenant names can then be specified in the issuing invocation like so:
+The seed value is exactly the value of the 'seed' property for the key you generated in the [Generate a new key](#generate-a-new-key) step, which from the example in that section would be:
+
+`"seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6"`
+
+#### Use a tenant
+
+Tenant names are specified in the issuing endpoint like so:
 
 ```
-http://myhost.org/instance/degrees/credentials/issue
 http://myhost.org/instance/econ101/credentials/issue
 ```
 
-And since you set a token for the degrees tenant, you'll have to include that token in the auth header as a Bearer token.  A curl command to issue on the degrees endpoint would then look like:
+where `econ101` is the tenant name you'd have set in the env files.
+
+If you set a token for the tenant, you'll have to include that token in the auth header as a Bearer token.  A curl command to issue on the `econ101` endpoint would then look like:
 
 ```
-curl --location 'http://localhost:4007/instance/degrees/credentials/issue' \
+curl --location 'http://localhost:4007/instance/econ101/credentials/issue' \
 --header 'Authorization: Bearer 988DKLAJH93KDSFV' \
 --header 'Content-Type: application/json' \
 --data-raw '{ 
@@ -261,120 +358,27 @@ For the moment, the issuer is set up to use the did:key implemenation of a DID w
 
 ### did:web
 
-The did:web implementation is likely where most implementations will end up, and so you'll eventually want to move to becuase it allows you to rotate (change) your signing keys whithout having to update every document that points at the old keys.  We'll provide did:web support in time, but if you need it now just let us know.
+The did:web implementation is likely where many implementations will end up, and so you'll eventually want to move to becuase it allows you to rotate (change) your signing keys whithout having to update every document that points at the old keys.  We'll provide did:web support in time, but if you need it now just let us know.
 
 ## Usage
 
 ### Issuing
 
-All right, now that you've got everything installed, you can start issuing cryptographically signed credentials.  Try it out with this CURL command, which you simply paste into the terminal, and which uses the default tenant:
+Pretty much just follow the example in the Quick Start, substituting your own tenant names on the endpoint, and posting your own Verifiable Credential.
 
-```
-curl --location 'http://localhost:4005/instance/default/credentials/issue' \
---header 'Content-Type: application/json' \
---data-raw '{ 
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
-    "https://purl.imsglobal.org/spec/ob/v3p0/context.json"
-  ],
-  "id": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1", 
-  "type": [
-    "VerifiableCredential",
-    "OpenBadgeCredential"
-  ],
-  "issuer": {
-    "id": "the issuer code will set this as the issuing DID", 
-    "type": "Profile",
-    "name": "DCC Test Issuer",
-    "description": "A test DID used to issue test credentials",
-    "url": "https://digitalcredentials.mit.edu",
-    "image": {
-	    "id": "https://user-images.githubusercontent.com/947005/133544904-29d6139d-2e7b-4fe2-b6e9-7d1022bb6a45.png",
-	    "type": "Image"
-	  }	
-  },
-  "issuanceDate": "2020-01-01T00:00:00Z", 
-  "expirationDate": "2025-01-01T00:00:00Z",
-  "name": "Successful Installation",
-  "credentialSubject": {
-      "type": "AchievementSubject",
-     "name": "Me!",
-     "achievement": {
-      	"id": "http://digitalcredentials.mit.edu",
-      	"type": "Achievement",
-      	"criteria": {
-        	"narrative": "Successfully installed the DCC issuer."
-      	},
-      	"description": "DCC congratulates you on your successful installation of the DCC Issuer.", 
-      	"name": "Successful Installation",
-      	"image": {
-	    	"id": "https://user-images.githubusercontent.com/752326/214947713-15826a3a-b5ac-4fba-8d4a-884b60cb7157.png",
-	    	"type": "Image"
-	  	}
-      }
-  	}
-}'
-```
+It is likely that you'll use this issuer as part of some larger system of your own where your flow goes something like:
 
-This should return a fully formed and signed credential printed to the terminal, that should look something like this (it will be all smushed up, but you can format it in something like [json lint](https://jsonlint.com):
+* student opens a web page on your school site to request their credential
+* you authenticate the sudent with campus authentication
+* you retrieve the data for the student's credential from wherever you keep the data
+* you create a verifiale credential by adding the student specific data to some verifiable credential template you've preconstructed
+* you pass the populated verifiable credential to this issuer
+* the issuer signs it and returns it to your calling code
+* your code returns the credential to the student
+* the student can then share the credential with others
+* the student might also want to import the credential into a wallet like the  [Learner Credential Wallet (LCW)](#learner-credential-wallet)
 
-
-```
-{
-	"@context": ["https://www.w3.org/2018/credentials/v1", "https://purl.imsglobal.org/spec/ob/v3p0/context.json", "https://w3id.org/vc/status-list/2021/v1", "https://w3id.org/security/suites/ed25519-2020/v1"],
-	"id": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1",
-	"type": ["VerifiableCredential", "OpenBadgeCredential"],
-	"issuer": {
-		"id": "did:key:z6Mkf2rgv7ef8FmLJ5Py87LMa7nofQgv6AstdkgsXiiCUJEy",
-		"type": "Profile",
-		"name": "DCC Test Issuer",
-		"description": "A test DID used to issue test credentials",
-		"url": "https://digitalcredentials.mit.edu",
-		"image": {
-			"id": "https://certificates.cs50.io/static/success.jpg",
-			"type": "Image"
-		}
-	},
-	"issuanceDate": "2020-01-01T00:00:00Z",
-	"expirationDate": "2025-01-01T00:00:00Z",
-	"name": "Successful Installation",
-	"credentialSubject": {
-		"type": "AchievementSubject",
-		"name": "Me!",
-		"achievement": {
-			"id": "http://digitalcredentials.mit.edu",
-			"type": "Achievement",
-			"criteria": {
-				"narrative": "Successfully installed the DCC issuer."
-			},
-			"description": "DCC congratulates you on your successful installation of the DCC Issuer.",
-			"name": "Successful Installation",
-			"image": {
-				"id": "https://certificates.cs50.io/static/success.jpg",
-				"type": "Image"
-			}
-		}
-	},
-	"credentialStatus": {
-        "id": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16",
-        "type": "StatusList2021Entry",
-        "statusPurpose": "revocation",
-        "statusListIndex": 16,
-        "statusListCredential": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4"
-    },
-	"proof": {
-		"type": "Ed25519Signature2020",
-		"created": "2023-05-19T14:47:25Z",
-		"verificationMethod": "did:key:z6Mkf2rgv7ef8FmLJ5Py87LMa7nofQgv6AstdkgsXiiCUJEy#z6Mkf2rgv7ef8FmLJ5Py87LMa7nofQgv6AstdkgsXiiCUJEy",
-		"proofPurpose": "assertionMethod",
-		"proofValue": "zviQazCEMihts4e6BrhxkEu5VbCPFqTFLY5qBkiRztf3eq1vXYXUCQrTL6ohxmMrsAPEJpB9WGbN1NH5DsSDHsCU"
-	}
-}
-```
-
-NOTE: the `credentialStatus` section will only have been added if you enabled revocation.
-
-NOTE: CURL can get a bit clunky if you want to experiment, so you might consider trying [Postman](https://www.postman.com/downloads/) which makes it very easy to construct and send http calls.
+The DCC provides another issuing service called the [exchange-coordinator](https://github.com/digitalcredentials/exchange-coordinator) which can make it a bit easier to directly issue credentials to the Learner Credential Wallet. It is used similarly to this issuer, but incorporates an a direct 'exchange' with the Learner Credential Wallet.
 
 ### Revoking
 
