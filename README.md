@@ -16,7 +16,7 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
   - [Generate a New Key](#generate-a-new-key)
-  - [Tenants](#add-tenants)
+  - [Tenants](#tenants)
     - [Add a Tenant ](#add-a-tenant)
 	- [Use a Tenant](#use-a-tenant)
   - [Enable Revocation](#enable-revocation)
@@ -44,9 +44,9 @@ Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) http endpoints:
 
 We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
 
-In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and to *wire* together to compose functionality. The apps are wired together in a simple docker compose network that pulls images from DockerHub.
+In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are wired together in a simple docker compose network that pulls images from DockerHub.
 
-We've made installation a gradual process starting with a simple version that can be up and running in about three minutes, and then progressing with configuration as needed.
+We've made installation a gradual process starting with a simple version that can be up and running in about five minutes, and then progressing with configuration as needed.
 
 ## Quick Start
 
@@ -54,7 +54,7 @@ These four step should take less than five minutes in total:
 
 ### Install Docker
 
-Docker have made this very easy, with [installers for Windows, Mac, and Linux](https://docs.docker.com/engine/install/) that make it as easy to install as any other application.
+Docker have made this straightforward, with [installers for Windows, Mac, and Linux](https://docs.docker.com/engine/install/) that make it as easy to install Docker as any other application.
 
 ### Make a Docker Compose file
 
@@ -128,7 +128,7 @@ curl --location 'http://localhost:4005/instance/test/credentials/issue' \
 }'
 ```
 
-This should return a fully formed and signed credential printed to the terminal, that should look something like this (it will be all smushed up, but you can format it in something like [json lint](https://jsonlint.com):
+This should return a fully formed and signed credential printed to the terminal, that should look something like this (it will be all smushed up, but you can format it in something like [json lint](https://jsonlint.com)):
 
 ```
 {
@@ -176,11 +176,11 @@ This should return a fully formed and signed credential printed to the terminal,
 }
 ```
 
-WARNING: DO NOT USE THIS TO ISSUE `REAL` CREDENTIALS UNTIL YOU'VE [SET YOUR OWN SIGNING KEY](#signing-key)
+WARNING: DO NOT USE THIS TO ISSUE `REAL` CREDENTIALS UNTIL YOU'VE [SET YOUR OWN SIGNING KEY](#generate-a-new-key)
 
 NOTE: CURL can get a bit clunky if you want to experiment, so you might consider trying [Postman](https://www.postman.com/downloads/) which makes it very easy to construct and send http calls.
 
-NOTE: Revocation is not enabled in the Quick Start. You've got to setup a couple of thigs to [ENABLE REVOCATION](#create-github-repositories).
+NOTE: Revocation is not enabled in the Quick Start. You've got to setup a couple of thigs to [ENABLE REVOCATION](#enable-revocation).
 
 Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production).
 
@@ -191,8 +191,8 @@ There are a few things you'll want to configure, in particular setting your own 
 The app is configured with three .env files:
 
 * [.coordinator.env](./.coordinator.env)
-* [.signing-service.env](./.signer.env)
-* [.status-service.env](./.signer.env)
+* [.signing-service.env](./.signing-service.env)
+* [.status-service.env](./.status-service.env)
 
 If you've used the QuickStart docker-compose.yml, then you'll have to change it a bit to point at these files. Alternatively, we've pre-configured this [docker-compose.yml](./docker-compose.yml), though, so you can just use that.
 
@@ -202,7 +202,7 @@ The issuer is pre-configured with a preset signing key for testing that can only
 
 To issue your own credentials you must generate your own signing key and keep it private.  We've tried to make that a little easier by providing a convenience endpoint in the issuer that you can use to generate a brand new key.  You can hit the endpoint with the following CURL command (in a terminal):
 
-`curl --location 'http://localhost:4007/seedgen'`
+`curl --location 'http://localhost:4005/seedgen'`
 
 This will return a json document with:
 
@@ -252,7 +252,7 @@ We're calling these differents signing authorities 'tenants'.
 Adding a tenant amounts to adding one line each to 
 
 * [.coordinator.env](.coordinator.env)
-* [.signer.env](.signer.env)
+* [.signing-service.env](.signing-service.env)
 
 ##### .coordinator.env
 
@@ -280,7 +280,7 @@ If you set a value other than UNPROTECTED then that value must be included as a 
 
 We also suggest using IP filtering on your endpoints to only allow set IPs to access the issuer.  Set filtering in your nginx or similar.
 
-##### .signer.env
+##### .signing-service.env
 
 Add a line like:
 
@@ -333,7 +333,7 @@ Create two repositories, one public and one private. Call them anything you like
 
 Get a Github token with access to the repositories as described [here](https://github.com/digitalcredentials/credential-status-manager-git#generate-access-tokens)
 
-Now set these in the [.status.env](.status.env) file, which has the following options:
+Now set these in the [.status-service.env](.status-service.env) file, which has the following options:
 
 | Key | Description | Default | Required |
 | --- | --- | --- | --- |
