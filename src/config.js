@@ -8,10 +8,6 @@ const defaultTenantToken = "UNPROTECTED"
 const defaultStatusServiceEndpoint = "STATUS:4008"
 const defaultSigningServiceEndpoint = "SIGNER:4006"
 
-//const defaultStatusServiceEndpoint = "localhost:4008"
-//const defaultSigningServiceEndpoint = "localhost:4006"
-
-
 // we set a default tenant
 // It will be overwritten by whatever value is set for default in .env
 const TENANT_ACCESS_TOKENS = {}
@@ -33,8 +29,6 @@ function parseTenantTokens() {
     const tenantName = key.slice(13).toLowerCase()
     TENANT_ACCESS_TOKENS[tenantName] = value
   }
-  console.log("tenant tokens:")
-  console.log(TENANT_ACCESS_TOKENS)
 }
 
 
@@ -66,8 +60,6 @@ export function getTenantToken(tenantName) {
   if (! Object.keys(TENANT_ACCESS_TOKENS).length) {
      parseTenantTokens()
   }
-  console.log("the token list:")
-  console.log(TENANT_ACCESS_TOKENS)
   if (TENANT_ACCESS_TOKENS.hasOwnProperty(tenantName)) {
     return TENANT_ACCESS_TOKENS[tenantName];
   } else {
