@@ -55,11 +55,8 @@ export async function build(opts = {}) {
     });
 
     app.get('/seedgen', async (req, res, next) => {
-        const reponse = await axios.get(`http://${signingServiceEndpoint}/seedgen`)
-        return res.json(res.body)
-        
-       // const newSeed = await generateSeed()
-       // res.send(newSeed)
+        const response = await axios.get(`http://${signingServiceEndpoint}/seedgen`)
+        return res.json(response.data)
     });
 
     app.post("/instance/:tenantName/credentials/issue",
