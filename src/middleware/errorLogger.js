@@ -13,7 +13,6 @@ const errorLogger = (error, request, response, next) => {
         logEntry.serviceResponseError = error.response.data
         logEntry.serviceResponseStatus = error.response.status
         logEntry.serviceResponseHeaders = error.response.headers
-        logEntry.serviceRequest = error.request
     } else if (error.request) {
       logEntry.message = "One of the internal microservices didn't respond."
       logEntry.serviceRequest = error.request
@@ -31,7 +30,7 @@ const errorLogger = (error, request, response, next) => {
   // output to the log as provided, as JSON in this case.
   logger.error(errorLogMessage, logEntry)
 
-  next(error) // done logging, so call next middleware that deals with errors
+  next(error) // done logging, so call whatever next middleware that deals with errors
 }
 
 export default errorLogger
