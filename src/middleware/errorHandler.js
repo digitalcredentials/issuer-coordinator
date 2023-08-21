@@ -7,7 +7,6 @@ function handleAxiosError(error) {
         errorResponse.serviceResponseError = error.response.data
         errorResponse.serviceResponseStatus = error.response.status
         errorResponse.serviceResponseHeaders = error.response.headers
-        errorResponse.serviceRequest = error.request
     } else if (error.request) {
         errorResponse.message = "One of the internal microservices didn't respond."
         errorResponse.serviceRequest = error.request
@@ -29,8 +28,6 @@ const errorHandler = (error, request, response, next) => {
         errorResponse = error
     }
     response.header("Content-Type", 'application/json')
-    console.log(error)
-    console.log(errorResponse)
     response.status(errorResponse.code).json(errorResponse)
 }
 
