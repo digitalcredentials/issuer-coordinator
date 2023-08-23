@@ -68,7 +68,7 @@ export async function build(opts = {}) {
 
                 await verifyAuthHeader(authHeader, tenantName)
                 // NOTE: we throw the error here which will then be caught by middleware errorhandler
-                if (!req.body || !Object.keys(req.body).length) throw {code:400, message:'A verifiable credential must be provided in the body'}
+                if (!unSignedVC || !Object.keys(unSignedVC).length) throw {code:400, message:'A verifiable credential must be provided in the body'}
                 const vcWithStatus = enableStatusService ?
                     await callService(`http://${statusServiceEndpoint}/credentials/status/allocate`, unSignedVC)
                     :
@@ -93,10 +93,17 @@ export async function build(opts = {}) {
                 const authHeader = req.headers.authorization
                 const statusUpdate = req.body
                 await verifyAuthHeader(authHeader, tenantName)
-                const updateResult = await callService(`http://${statusServiceEndpoint}/credentials/status`, statusUpdate)
+                // NOTE: we throw the error here which will then be caught by middleware errorhandler
+                if (!statusUpdate || !Object.keys(statusUpdate).length) throw {code:400, message:'A status update must be provided in the body.'}
+              const updateResult = await callService(`http://${statusServiceEndpoint}/credentials/status`, statusUpdate)
                 return res.json(updateResult)
             } catch (error) {
-                // have to catch and forward async errors to middleware:
+                if (error.response?.status == 404) {
+                    // if it is a 404 then just forward on the error
+                    // we got from the service
+                    next(error.response.data)
+                }
+                // otherwise, forward the error to middleware:
                 next(error)
             }
         })
