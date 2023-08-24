@@ -1,14 +1,14 @@
-import nock from 'nock';
+import nock from 'nock'
 import { expect } from 'chai'
-import request from 'supertest';
-import { getUnsignedVC, getUnsignedVCWithStatus } from './test-fixtures/vc.js';
+import request from 'supertest'
+import { getUnsignedVC } from './test-fixtures/vc.js'
 import unprotectedNock from './test-fixtures/nocks/unprotected_status_signing.js'
 import protectedNock from './test-fixtures/nocks/protected_status_signing.js'
 import unprotectedStatusUpdateNock from './test-fixtures/nocks/unprotected_status_update.js'
 import unknownStatusIdNock from './test-fixtures/nocks/unknown_status_id_nock.js'
 import protectedStatusUpdateNock from './test-fixtures/nocks/protected_status_update.js'
 
-import { build } from './app.js';
+import { build } from './app.js'
 
 let testTenantToken
 let testTenantToken2
@@ -17,54 +17,50 @@ let statusUpdateBody
 let app
 
 describe('api', () => {
-
   before(async () => {
-    //testDIDSeed = await decodeSeed(process.env.TENANT_SEED_TESTING)
+    // testDIDSeed = await decodeSeed(process.env.TENANT_SEED_TESTING)
     testTenantToken = process.env.TENANT_TOKEN_PROTECTED_TEST
     testTenantToken2 = process.env.TENANT_TOKEN_PROTECTED_TEST_2
-    statusUpdateBody = { "credentialId": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1", "credentialStatus": [{ "type": "StatusList2021Credential", "status": "revoked" }] }
-  });
+    statusUpdateBody = { credentialId: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1', credentialStatus: [{ type: 'StatusList2021Credential', status: 'revoked' }] }
+  })
 
   after(() => {
   })
 
   beforeEach(async () => {
-    app = await build();
+    app = await build()
     if (!nock.isActive()) nock.activate()
-  });
+  })
 
   afterEach(async () => {
     nock.restore()
-  });
+  })
 
   describe('GET /', () => {
     it('GET / => hello', done => {
-
-      nock('http://localhost:4006').get("/").reply(200, 'signing-service server status: ok.')
-      nock('http://localhost:4008').get("/").reply(200, 'signing-service server status: ok.')
+      nock('http://localhost:4006').get('/').reply(200, 'signing-service server status: ok.')
+      nock('http://localhost:4008').get('/').reply(200, 'signing-service server status: ok.')
 
       request(app)
-        .get("/")
+        .get('/')
         .expect(200)
         .expect('Content-Type', /json/)
-        .expect(/{"message":"issuer-coordinator, status-service, and signing-service all ok."}/, done);
-
-    });
+        .expect(/{"message":"issuer-coordinator, status-service, and signing-service all ok."}/, done)
+    })
   })
 
   describe('GET /unknown', () => {
     it('unknown endpoint returns 404', done => {
       request(app)
-        .get("/unknown")
+        .get('/unknown')
         .expect(404, done)
-    }, 10000);
+    }, 10000)
   })
 
   describe('POST /instance/:instanceId/credentials/issue', () => {
-
     it('returns 400 if no body', done => {
       request(app)
-        .post("/instance/protected_test/credentials/issue")
+        .post('/instance/protected_test/credentials/issue')
         .set('Authorization', `Bearer ${testTenantToken}`)
         .expect('Content-Type', /json/)
         .expect(400, done)
@@ -72,30 +68,28 @@ describe('api', () => {
 
     it('returns 401 if tenant token is missing from auth header', done => {
       request(app)
-        .post("/instance/protected_test/credentials/issue")
+        .post('/instance/protected_test/credentials/issue')
         .send(getUnsignedVC())
         .expect('Content-Type', /json/)
         .expect(401, done)
     })
 
     it('issues credential for unprotected tenant', async () => {
-      unprotectedNock();
+      unprotectedNock()
 
       const response = await request(app)
-        .post("/instance/un_protected_test/credentials/issue")
+        .post('/instance/un_protected_test/credentials/issue')
         .send(getUnsignedVC())
 
-      expect(response.header["content-type"]).to.have.string("json");
-      expect(response.status).to.eql(200);
+      expect(response.header['content-type']).to.have.string('json')
+      expect(response.status).to.eql(200)
       expect(response.body)
-
-      
     })
 
     it('returns 403 if token is not valid', done => {
       request(app)
-        .post("/instance/protected_test/credentials/issue")
-        .set('Authorization', `Bearer badToken`)
+        .post('/instance/protected_test/credentials/issue')
+        .set('Authorization', 'Bearer badToken')
         .send(getUnsignedVC())
         .expect('Content-Type', /json/)
         .expect(403, done)
@@ -103,7 +97,7 @@ describe('api', () => {
 
     it('returns 403 when trying to use token for a different tenant', done => {
       request(app)
-        .post("/instance/protected_test/credentials/issue")
+        .post('/instance/protected_test/credentials/issue')
         .set('Authorization', `Bearer ${testTenantToken2}`)
         .send(getUnsignedVC())
         .expect('Content-Type', /json/)
@@ -112,7 +106,7 @@ describe('api', () => {
 
     it('returns 401 if token is not marked as Bearer', done => {
       request(app)
-        .post("/instance/protected_test/credentials/issue")
+        .post('/instance/protected_test/credentials/issue')
         .set('Authorization', `${testTenantToken}`)
         .send(getUnsignedVC())
         .expect('Content-Type', /json/)
@@ -121,39 +115,35 @@ describe('api', () => {
 
     it('returns 404 if no seed for tenant name', done => {
       request(app)
-        .post("/instance/wrongTenantName/credentials/issue")
+        .post('/instance/wrongTenantName/credentials/issue')
         .set('Authorization', `${testTenantToken}`)
         .send(getUnsignedVC())
         .expect(404, done)
         .expect('Content-Type', /json/)
-
     })
 
     it('returns signed vc for protected tenant', async () => {
-      //nock.recorder.rec()
+      // nock.recorder.rec()
       protectedNock()
       const sentCred = getUnsignedVC()
       const response = await request(app)
-        .post("/instance/protected_test/credentials/issue")
+        .post('/instance/protected_test/credentials/issue')
         .set('Authorization', `Bearer ${testTenantToken}`)
         .send(sentCred)
 
-      expect(response.header["content-type"]).to.have.string("json");
-      expect(response.status).to.eql(200);
+      expect(response.header['content-type']).to.have.string('json')
+      expect(response.status).to.eql(200)
 
-      const returnedCred = JSON.parse(JSON.stringify(response.body));
+      const returnedCred = JSON.parse(JSON.stringify(response.body))
       // this proof value comes from the nock:
-      expect(returnedCred.proof.proofValue).to.eql("z5QQ12zr5JvEsKvbnEN2EYZ6punR6Pa5wMJzywGJ2dCh6SSA5oQb9hBiGADsNTbs57bopArwdBHE9kEVemMxcu1Fq")
-
-    });
-
+      expect(returnedCred.proof.proofValue).to.eql('z5QQ12zr5JvEsKvbnEN2EYZ6punR6Pa5wMJzywGJ2dCh6SSA5oQb9hBiGADsNTbs57bopArwdBHE9kEVemMxcu1Fq')
+    })
   })
 
   describe('POST /instance/:instanceId/credentials/status', () => {
-
     it('returns 400 if no body', done => {
       request(app)
-        .post("/instance/un_protected_test/credentials/status")
+        .post('/instance/un_protected_test/credentials/status')
         .set('Authorization', `Bearer ${testTenantToken}`)
         .expect('Content-Type', /json/)
         .expect(400, done)
@@ -161,17 +151,17 @@ describe('api', () => {
 
     it('returns 401 if tenant token is missing from auth header', done => {
       request(app)
-        .post("/instance/protected_test/credentials/status")
+        .post('/instance/protected_test/credentials/status')
         .send(statusUpdateBody)
         .expect('Content-Type', /json/)
         .expect(401, done)
     })
 
     it('update unprotected status when token not set for tenant in config', done => {
-     //nock.recorder.rec()
+      // nock.recorder.rec()
       unprotectedStatusUpdateNock()
       request(app)
-        .post("/instance/un_protected_test/credentials/status")
+        .post('/instance/un_protected_test/credentials/status')
         .send(statusUpdateBody)
         .expect('Content-Type', /json/)
         .expect(200, done)
@@ -179,8 +169,8 @@ describe('api', () => {
 
     it('returns 403 if token is not valid', done => {
       request(app)
-        .post("/instance/protected_test/credentials/status")
-        .set('Authorization', `Bearer ThisIsABadToken`)
+        .post('/instance/protected_test/credentials/status')
+        .set('Authorization', 'Bearer ThisIsABadToken')
         .send(statusUpdateBody)
         .expect('Content-Type', /json/)
         .expect(403, done)
@@ -188,7 +178,7 @@ describe('api', () => {
 
     it('returns 401 if token is not marked as Bearer', done => {
       request(app)
-        .post("/instance/protected_test/credentials/status")
+        .post('/instance/protected_test/credentials/status')
         .set('Authorization', `${testTenantToken}`)
         .send(statusUpdateBody)
         .expect('Content-Type', /json/)
@@ -197,17 +187,16 @@ describe('api', () => {
 
     it('returns 404 if no seed for tenant name', done => {
       request(app)
-        .post("/instance/wrongTenantName/credentials/status")
+        .post('/instance/wrongTenantName/credentials/status')
         .set('Authorization', `${testTenantToken}`)
         .send(statusUpdateBody)
         .expect(404, done)
         .expect('Content-Type', /json/)
-
     })
 
     it('returns 403 when trying to use token for a different tenant', done => {
       request(app)
-        .post("/instance/protected_test/credentials/status")
+        .post('/instance/protected_test/credentials/status')
         .set('Authorization', `Bearer ${testTenantToken2}`)
         .send(statusUpdateBody)
         .expect('Content-Type', /json/)
@@ -215,33 +204,28 @@ describe('api', () => {
     })
 
     it('returns 404 for unknown cred id', async () => {
-          //  nock.recorder.rec()
-     unknownStatusIdNock()
+      //  nock.recorder.rec()
+      unknownStatusIdNock()
       const statusUpdateBodyWithUnknownId = JSON.parse(JSON.stringify(statusUpdateBody))
       statusUpdateBodyWithUnknownId.credentialId = 'kj09ij'
       const response = await request(app)
-        .post("/instance/protected_test/credentials/status")
+        .post('/instance/protected_test/credentials/status')
         .set('Authorization', `Bearer ${testTenantToken}`)
         .send(statusUpdateBodyWithUnknownId)
 
-
-       expect(response.header["content-type"]).to.have.string("json");
-      expect(response.status).to.eql(404);
+      expect(response.header['content-type']).to.have.string('json')
+      expect(response.status).to.eql(404)
     })
-    
-    it('calls status manager for protected tenant', async () => {
 
+    it('calls status manager for protected tenant', async () => {
       protectedStatusUpdateNock()
       const response = await request(app)
-        .post("/instance/protected_test/credentials/status")
+        .post('/instance/protected_test/credentials/status')
         .set('Authorization', `Bearer ${testTenantToken}`)
         .send(statusUpdateBody)
 
-      expect(response.header["content-type"]).to.have.string("json");
-      expect(response.status).to.eql(200);
+      expect(response.header['content-type']).to.have.string('json')
+      expect(response.status).to.eql(200)
     })
-
   })
 })
-
-
