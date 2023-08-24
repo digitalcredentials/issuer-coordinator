@@ -1,6 +1,6 @@
-import winston from 'winston';
+import winston from 'winston'
 
-/* 
+/*
 These are the default npm logging levels
 that Winston uses, but we include them explicitly
 here in case you want to change them
@@ -32,7 +32,7 @@ const format = winston.format.combine(
   winston.format.json()
 )
 
-/* 
+/*
 Here we output to three different destinations,
 as examples of what you can do
 */
@@ -40,16 +40,16 @@ const transports = [
   new winston.transports.Console(),
   new winston.transports.File({
     filename: 'logs/error.log',
-    level: 'error',
+    level: 'error'
   }),
-  new winston.transports.File({ filename: 'logs/all.log' }),
+  new winston.transports.File({ filename: 'logs/all.log' })
 ]
 
 const logger = winston.createLogger({
   level: level(),
   levels,
   format,
-  transports,
+  transports
 })
 
 export default logger
