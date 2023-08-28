@@ -418,6 +418,10 @@ You might now consider importing your new credential into the [Learner Credentia
 
 ## Development
 
+To run the issuer-coordinator locally from the cloned repository, you'll also have to clone the repository for the [signing-service](https://github.com/digitalcredentials/signing-service) and have it running locally at the same time. And, similarly, if you want to include status allocation, you'll also have to clone the repository for the [status-service](https://github.com/digitalcredentials/signing-service) and run that locally as well.
+
+When running locally, the system picks up environment variables from the standard [.env](./.env) file, rather than from the env files that we recommend using with docker compose.
+
 ### Installation
 
 Clone code then cd into directory and:
@@ -427,15 +431,14 @@ npm install
 npm run dev
 ```
 
-If for whatever reason you need to run the server over https, you can set the `ENABLE_HTTPS_FOR_DEV` environment variable to true.  Note, though, that this should ONLY be used for development.
-
 ### Testing
 
-Testing uses supertest, jest, and nock to test the endpoints.  To run tests:
+Testing uses supertest, mocha, and nock to test the endpoints.  To run tests:
 
 ```npm run test```
 
-Because the revocation (status) system uses github to store status, calls are made out to github during issuance.  Rather than have to make these calls for every test, and possibly in cases where outgoing http calls aren't ideal, we've used [nock](https://github.com/nock/nock) to mock out the http calls to the github api, so that the actual calls needn't be made - nock instead returns our precanned replies.  Creating mocks can be time consuming, though, so we've also opted to use the recording feature of nock which allows us to run the tests in 'record' mode which will make the real calls out to Github, and record the results so they can be used for future calls.
+Note that when testing we don't actually want to make live http calls to the services,
+so we've used nock to intercept the http calls and return precanned data.
 
 ## Contribute
 
