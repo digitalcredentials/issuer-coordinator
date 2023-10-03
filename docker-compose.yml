@@ -1,19 +1,16 @@
 version: '3.5'
 services:
   coordinator:
-    image: digitalcredentials/issuer-coordinator
-    #build: .
+    image: digitalcredentials/issuer-coordinator:0.1.0
     env_file:
       - ./.coordinator.env
     ports:
       - "4005:4005"
   signer:
-    image: digitalcredentials/signing-service
-    #build: ../signing-service
+    image: digitalcredentials/signing-service:0.1.0
     env_file:
       - ./.signing-service.env
   status:
-    image: digitalcredentials/status-service
-    #build: ../status-service
+    image: digitalcredentials/status-service:0.1.0
     env_file:
       - ./.status-service.env
