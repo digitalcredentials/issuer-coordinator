@@ -64,11 +64,11 @@ Create a file called docker-compose.yml and add the following
 version: '3.5'
 services:
   coordinator:
-    image: digitalcredentials/issuer-coordinator
+    image: digitalcredentials/issuer-coordinator:0.1.0
     ports:
       - "4005:4005"
   signer:
-    image: digitalcredentials/signing-service
+    image: digitalcredentials/signing-service:0.1.0
 ```
 
 ### Run it
@@ -180,9 +180,21 @@ WARNING: DO NOT USE THIS TO ISSUE `REAL` CREDENTIALS UNTIL YOU'VE [SET YOUR OWN 
 
 NOTE: CURL can get a bit clunky if you want to experiment, so you might consider trying [Postman](https://www.postman.com/downloads/) which makes it very easy to construct and send http calls.
 
-NOTE: Revocation is not enabled in the Quick Start. You've got to setup a couple of thigs to [ENABLE REVOCATION](#enable-revocation).
+NOTE: Revocation is not enabled in the Quick Start. You've got to setup a couple of thigs to [enable revocation](#enable-revocation).
 
 Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production).
+
+## Versioning
+
+The issuer-coordinator and the services it coordinates are all intended to run as docker images within a docker compose network. For convenience we've published those images to Docker Hub so that you don't have to build them locally yourself from the github repositories.
+
+The images on Docker Hub will of course be updated to add new functionality and fix bugs. Rather than overwrite the default (`latest`) version on Docker Hub for each update, we've adopted the [Semantic Versioning Guidelines](https://semver.org) with our docker image tags.
+
+We DO NOT provide a `latest` tag so you must provide a tag name (i.e, the version number) for the images in your docker compose file, as we've done [here](./docker-compose.yml).
+
+To ensure you've got compatible versions of the services and the coordinator, the `major` number for each should match. At the time of writing, the versions for each are at 0.1.0, and the `major` number (the leftmost number) agrees across all three.
+
+If you do ever want to work from the source code in the repository and build your own images, we've tagged the commits in Github that were used to build the corresponding Docker image. So a github tag of v0.1.0 coresponds to a docker image tag of 0.1.0
 
 ## Configuration
 
@@ -369,7 +381,7 @@ Pretty much just follow the example in the Quick Start, substituting your own te
 It is likely that you'll use this issuer as part of some larger system of your own where your flow goes something like:
 
 * student opens a web page on your school site to request their credential
-* you authenticate the sudent with campus authentication
+* you authenticate the student with campus authentication
 * you retrieve the data for the student's credential from wherever you keep the data
 * you create a verifiale credential by adding the student specific data to some verifiable credential template you've preconstructed
 * you pass the populated verifiable credential to this issuer
@@ -378,7 +390,7 @@ It is likely that you'll use this issuer as part of some larger system of your o
 * the student can then share the credential with others
 * the student might also want to import the credential into a wallet like the  [Learner Credential Wallet (LCW)](#learner-credential-wallet)
 
-The DCC provides another issuing service called the [exchange-coordinator](https://github.com/digitalcredentials/exchange-coordinator) which can make it a bit easier to directly issue credentials to the Learner Credential Wallet. It is used similarly to this issuer, but incorporates an a direct 'exchange' with the Learner Credential Wallet.
+The DCC provides another issuing service called the [exchange-coordinator](https://github.com/digitalcredentials/exchange-coordinator) which can make it a bit easier to directly issue credentials to the Learner Credential Wallet. It is used similarly to this issuer, but incorporates a direct 'exchange' with the Learner Credential Wallet.
 
 ### Revoking
 
