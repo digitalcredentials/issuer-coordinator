@@ -323,12 +323,39 @@ where `econ101` is the tenant name you'd have set in the env files.
 If you set a token for the tenant, you'll have to include that token in the auth header as a Bearer token.  A curl command to issue on the `econ101` endpoint would then look like:
 
 ```
-curl --location 'http://localhost:4007/instance/econ101/credentials/issue' \
+curl --location 'http://localhost:4005/instance/econ101/credentials/issue' \
 --header 'Authorization: Bearer 988DKLAJH93KDSFV' \
 --header 'Content-Type: application/json' \
---data-raw '{ 
-  VC goes here
-}'
+--data-raw '{
+			"@context": ["https://www.w3.org/2018/credentials/v1", "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.2.json", "https://w3id.org/vc/status-list/2021/v1"],
+			"id": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1",
+			"type": ["VerifiableCredential", "OpenBadgeCredential"],
+			"issuer": {
+				"id": "did:key:z6MkhVTX9BF3NGYX6cc7jWpbNnR7cAjH8LUffabZP8Qu4ysC",
+				"type": "Profile",
+				"name": "School of Wonderful",
+				"description": "The most wonderful school",
+				"url": "https://wonderful.edu/",
+				"image": {
+					"id": "https://user-images.githubusercontent.com/947005/133544904-29d6139d-2e7b-4fe2-b6e9-7d1022bb6a45.png",
+					"type": "Image"
+				}
+			},
+			"issuanceDate": "2020-01-01T00:00:00Z",
+			"name": "A Simply Wonderful Course",
+			"credentialSubject": {
+				"type": "AchievementSubject",
+				"achievement": {
+					"id": "http://wonderful.wonderful",
+					"type": "Achievement",
+					"criteria": {
+						"narrative": "Completion of the Wonderful Course - well done you!"
+					},
+					"description": "Wonderful.",
+					"name": "Introduction to Wonderfullness"
+				}
+			}
+		}'
 ```
 
 ### Enable Revocation
@@ -349,7 +376,7 @@ Now set these in the [.status-service.env](.status-service.env) file, which has 
 
 | Key | Description | Default | Required |
 | --- | --- | --- | --- |
-| `PORT` | http port on which to run the express app | 4008 | no |
+| `PORT` | http port on which to run the express app | 4005 | no |
 | `CRED_STATUS_OWNER` | name of the owner account (personal or organization) in the source control service that will host the credential status resources | no | yes if ENABLE_STATUS_ALLOCATION is true |
 | `CRED_STATUS_REPO_NAME` | name of the credential status repository | no | yes if ENABLE_STATUS_ALLOCATION is true |
 | `CRED_STATUS_META_REPO_NAME` | name of the credential status metadata repository | no | yes if ENABLE_STATUS_ALLOCATION is true |
