@@ -334,7 +334,7 @@ http://myhost.org/instance/econ101/credentials/issue
 
 where `econ101` is the tenant name you'd have set in the env files.
 
-If you set a token for the tenant, you'll have to include that token in the auth header as a Bearer token.  A curl command to issue on the `econ101` endpoint would then look like:
+If you set a token for the tenant, you'll have to include that token in the auth header as a Bearer token.  A curl command to issue on the `econ101` endpoint would then look exactly like the call in the example above, but with the bearer token set in the 'Authorization' header like so:
 
 ```
 curl --location 'http://localhost:4005/instance/econ101/credentials/issue' \
