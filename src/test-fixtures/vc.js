@@ -1,9 +1,7 @@
 const unsignedVC = {
   '@context': [
-    'https://www.w3.org/2018/credentials/v1',
-    'https://purl.imsglobal.org/spec/ob/v3p0/context.json',
-    'https://w3id.org/vc/status-list/2021/v1',
-    'https://w3id.org/security/suites/ed25519-2020/v1'
+    'https://www.w3.org/ns/credentials/v2',
+    'https://purl.imsglobal.org/spec/ob/v3p0/context.json'
   ],
   id: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1',
   type: [
@@ -21,7 +19,7 @@ const unsignedVC = {
       type: 'Image'
     }
   },
-  issuanceDate: '2020-01-01T00:00:00Z',
+  validFrom: '2020-01-01T00:00:00Z',
   name: 'Introduction to Computer Science - CS50x',
   credentialSubject: {
     type: 'AchievementSubject',
@@ -45,7 +43,7 @@ const unsignedVC = {
 // "credentialStatus":
 const credentialStatus = {
   id: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16',
-  type: 'StatusList2021Entry',
+  type: 'BitstringStatusListEntry',
   statusPurpose: 'revocation',
   statusListIndex: 16,
   statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4'
@@ -68,6 +66,10 @@ const getUnsignedVCWithStatus = () => {
   return unsignedVCWithStatus
 }
 const suiteContext = 'https://w3id.org/security/suites/ed25519-2020/v1'
-const statusListContext = 'https://w3id.org/vc/status-list/2021/v1'
 
-export { getUnsignedVC, getUnsignedVCWithoutSuiteContext, getCredentialStatus, getUnsignedVCWithStatus, statusListContext }
+export {
+  getUnsignedVC,
+  getUnsignedVCWithoutSuiteContext,
+  getCredentialStatus,
+  getUnsignedVCWithStatus
+};

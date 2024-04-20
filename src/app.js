@@ -8,18 +8,27 @@ import invalidPathHandler from './middleware/invalidPathHandler.js'
 import verifyAuthHeader from './verifyAuthHeader.js'
 import { getConfig } from './config.js'
 
-function IssuingException (code, message, error = null) {
-  this.code = code
-  this.error = error
-  this.message = message
+class IssuingException extends Error {
+  constructor(code, message, error = null) {
+    super(message)
+    this.code = code
+    this.error = error
+    this.message = message
+  }
 }
+
 async function callService (endpoint, body) {
   const { data } = await axios.post(endpoint, body)
   return data
 }
 
 export async function build (opts = {}) {
-  const { enableStatusService, statusServiceEndpoint, signingServiceEndpoint } = getConfig()
+  const {
+    enableStatusService,
+    statusService,
+    signingService
+  } = getConfig()
+
   const app = express()
   // Add the middleware to write access logs
   app.use(accessLogger())
@@ -30,7 +39,7 @@ export async function build (opts = {}) {
   app.get('/', async function (req, res, next) {
     if (enableStatusService) {
       try {
-        await axios.get(`http://${statusServiceEndpoint}/`)
+        await axios.get(`http://${statusService}/`)
       } catch (e) {
         next({
           message: 'status service is NOT running.',
@@ -40,7 +49,7 @@ export async function build (opts = {}) {
       }
     }
     try {
-      await axios.get(`http://${signingServiceEndpoint}/`)
+      await axios.get(`http://${signingService}/`)
     } catch (e) {
       next({
         message: 'signing service is NOT running.',
@@ -57,7 +66,7 @@ export async function build (opts = {}) {
   })
 
   app.get('/seedgen', async (req, res, next) => {
-    const response = await axios.get(`http://${signingServiceEndpoint}/did-key-generator`)
+    const response = await axios.get(`http://${signingService}/seedgen`)
     return res.json(response.data)
   })
 
@@ -82,9 +91,9 @@ export async function build (opts = {}) {
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
         if (!unSignedVC || !Object.keys(unSignedVC).length) throw new IssuingException(400, 'A verifiable credential must be provided in the body')
         const vcWithStatus = enableStatusService
-          ? await callService(`http://${statusServiceEndpoint}/credentials/status/allocate`, unSignedVC)
+          ? await callService(`http://${statusService}/credentials/status/allocate`, unSignedVC)
           : unSignedVC
-        const signedVC = await callService(`http://${signingServiceEndpoint}/instance/${tenantName}/credentials/sign`, vcWithStatus)
+        const signedVC = await callService(`http://${signingService}/instance/${tenantName}/credentials/sign`, vcWithStatus)
         return res.json(signedVC)
       } catch (error) {
         // have to catch async errors and forward error handling
@@ -94,7 +103,7 @@ export async function build (opts = {}) {
     })
 
   // updates the status
-  // the body will look like:  {credentialId: '23kdr', credentialStatus: [{type: 'StatusList2021Credential', status: 'revoked'}]}
+  // the body will look like:  {credentialId: '23kdr', credentialStatus: [{type: 'BitstringStatusListCredential', status: 'revoked'}]}
   app.post('/instance/:tenantName/credentials/status',
     async (req, res, next) => {
       if (!enableStatusService) return res.status(405).send('The status service has not been enabled.')
@@ -105,7 +114,7 @@ export async function build (opts = {}) {
         await verifyAuthHeader(authHeader, tenantName)
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
         if (!statusUpdate || !Object.keys(statusUpdate).length) throw new IssuingException(400, 'A status update must be provided in the body.')
-        const updateResult = await callService(`http://${statusServiceEndpoint}/credentials/status`, statusUpdate)
+        const updateResult = await callService(`http://${statusService}/credentials/status`, statusUpdate)
         return res.json(updateResult)
       } catch (error) {
         if (error.response?.status === 404) {

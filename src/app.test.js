@@ -21,7 +21,7 @@ describe('api', () => {
     // testDIDSeed = await decodeSeed(process.env.TENANT_SEED_TESTING)
     testTenantToken = process.env.TENANT_TOKEN_PROTECTED_TEST
     testTenantToken2 = process.env.TENANT_TOKEN_PROTECTED_TEST_2
-    statusUpdateBody = { credentialId: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1', credentialStatus: [{ type: 'StatusList2021Credential', status: 'revoked' }] }
+    statusUpdateBody = { credentialId: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1', credentialStatus: [{ type: 'BitstringStatusListCredential', status: 'revoked' }] }
   })
 
   after(() => {
@@ -39,7 +39,7 @@ describe('api', () => {
   describe('GET /', () => {
     it('GET / => hello', done => {
       nock('http://localhost:4006').get('/').reply(200, 'signing-service server status: ok.')
-      nock('http://localhost:4008').get('/').reply(200, 'signing-service server status: ok.')
+      nock('http://localhost:4008').get('/').reply(200, 'status-service server status: ok.')
 
       request(app)
         .get('/')

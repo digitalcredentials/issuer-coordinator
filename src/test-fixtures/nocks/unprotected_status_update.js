@@ -2,7 +2,7 @@ import nock from 'nock'
 
 export default () => {
   nock('http://localhost:4008', { encodedQueryParams: true })
-    .post('/credentials/status', { credentialId: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1', credentialStatus: [{ type: 'StatusList2021Credential', status: 'revoked' }] })
+    .post('/credentials/status', { credentialId: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1', credentialStatus: [{ type: 'BitstringStatusListCredential', status: 'revoked' }] })
     .reply(200, 'Credential status successfully updated', [
       'X-Powered-By',
       'Express',
