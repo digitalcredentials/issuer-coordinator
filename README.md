@@ -64,11 +64,11 @@ Create a file called docker-compose.yml and add the following
 version: '3.5'
 services:
   coordinator:
-    image: digitalcredentials/issuer-coordinator:0.1.0
+    image: digitalcredentials/issuer-coordinator:0.2.0
     ports:
       - "4005:4005"
   signer:
-    image: digitalcredentials/signing-service:0.1.0
+    image: digitalcredentials/signing-service:0.3.0
 ```
 
 ### Run it
@@ -206,7 +206,7 @@ The images on Docker Hub will of course be updated to add new functionality and 
 
 We DO NOT provide a `latest` tag so you must provide a tag name (i.e, the version number) for the images in your docker compose file, as we've done [here](./docker-compose.yml).
 
-To ensure you've got compatible versions of the services and the coordinator, the `major` number for each should match. At the time of writing, the versions for each are at 0.1.0, and the `major` number (the leftmost number) agrees across all three.
+To ensure you've got compatible versions of the services and the coordinator, the `major` number for each should match. At the time of writing, the versions for each are at 0.2.0, and the `major` number (the leftmost number) agrees across all three.
 
 If you do ever want to work from the source code in the repository and build your own images, we've tagged the commits in Github that were used to build the corresponding Docker image. So a github tag of v0.1.0 coresponds to a docker image tag of 0.1.0
 
@@ -226,44 +226,18 @@ The issuer is pre-configured with a preset signing key for testing that can only
 
 ### Generate a new key
 
-To issue your own credentials you must generate your own signing key and keep it private.  We've tried to make that a little easier by providing a convenience endpoint in the issuer that you can use to generate a brand new key.  You can hit the endpoint with the following CURL command (in a terminal):
+To issue your own credentials you must generate your own signing key and keep it private.  We've tried to make that a little easier by providing two convenience endpoints in the issuer that you can use to generate a brand new random key - one using the did:key method and one using the did:web method. You can hit the endpoints with the following CURL command (in a terminal):
 
-`curl --location 'http://localhost:4005/seedgen'`
+#### did:key
 
-This will return a json document with:
+`curl --location 'http://localhost:4005/did-key-generator'`
 
-- a seed
-- the corresponding DID
-- the corresponding DID Document
 
-The returned result will look something like this:
+#### did:web
 
-```
-{
-	"seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6",
-	"did": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-	"didDocument": {
-		"@context": ["https://www.w3.org/ns/did/v1", "https://w3id.org/security/suites/ed25519-2020/v1", "https://w3id.org/security/suites/x25519-2020/v1"],
-		"id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-		"verificationMethod": [{
-			"id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-			"type": "Ed25519VerificationKey2020",
-			"controller": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-			"publicKeyMultibase": "z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"
-		}],
-		"authentication": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"assertionMethod": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"capabilityDelegation": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"capabilityInvocation": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"keyAgreement": [{
-			"id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6LSnYW9e4Q4EXTvdjDhKyr2D1ghBfSLa5dJGBfzjG6hyPEt",
-			"type": "X25519KeyAgreementKey2020",
-			"controller": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-			"publicKeyMultibase": "z6LSnYW9e4Q4EXTvdjDhKyr2D1ghBfSLa5dJGBfzjG6hyPEt"
-		}]
-	}
-}
-```
+`curl --location 'http://localhost:4005/did-web-generator'`
+
+Both endpoints simply forward your call to the equivalent endpoint in the signing-service. You can read about the endpoints in the [Signing Key section of the signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator).
 
 Now that you've got your key you'll want to enable it by adding a new tenant to use the seed...
 
@@ -308,21 +282,7 @@ We also suggest using IP filtering on your endpoints to only allow set IPs to ac
 
 ##### .signing-service.env
 
-Add a line like:
-
-```
-TENANT_SEED_{TENANT_NAME}={SEED}
-```
-
-For example:
-
-```
-TENANT_SEED_ECON101=z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6
-```
-
-The seed value is exactly the value of the 'seed' property for the key you generated in the [Generate a new key](#generate-a-new-key) step, which from the example in that section would be:
-
-`"seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6"`
+The [signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator) explains how to set your DID, whether using did:key or did:web. Note that the signing-service docs describe using convenience endpoints to generate new DIDs. You can call those endpoints directly in the signing-serive, or call the same endpoints in the coordinator, as described above in the [Generate a new key section](#generate-a-new-key). The coordinator endpoints simply forward the request to the signing-service.
 
 #### Use a tenant
 
