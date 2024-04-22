@@ -57,10 +57,19 @@ export async function build (opts = {}) {
   })
 
   app.get('/seedgen', async (req, res, next) => {
-    const response = await axios.get(`http://${signingServiceEndpoint}/seedgen`)
+    const response = await axios.get(`http://${signingServiceEndpoint}/did-key-generator`)
     return res.json(response.data)
   })
 
+  app.get('/did-key-generator', async (req, res, next) => {
+    const response = await axios.get(`http://${signingServiceEndpoint}/did-key-generator`)
+    return res.json(response.data)
+  })
+
+  app.post('/did-web-generator', async (req, res, next) => {
+    const response = await axios.get(`http://${signingServiceEndpoint}/did-web-generator`)
+    return res.json(response.data)
+  })
   app.post('/instance/:tenantName/credentials/issue',
     async (req, res, next) => {
       try {
