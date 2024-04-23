@@ -82,7 +82,7 @@ describe('api', () => {
         .send(getUnsignedVC())
 
       expect(response.header['content-type']).to.have.string('json')
-      expect(response.status).to.eql(200)
+      expect(response.status).to.equal(200)
       expect(response.body)
     })
 
@@ -132,11 +132,11 @@ describe('api', () => {
         .send(sentCred)
 
       expect(response.header['content-type']).to.have.string('json')
-      expect(response.status).to.eql(200)
+      expect(response.status).to.equal(200)
 
       const returnedCred = JSON.parse(JSON.stringify(response.body))
       // this proof value comes from the nock:
-      expect(returnedCred.proof.proofValue).to.eql('z5QQ12zr5JvEsKvbnEN2EYZ6punR6Pa5wMJzywGJ2dCh6SSA5oQb9hBiGADsNTbs57bopArwdBHE9kEVemMxcu1Fq')
+      expect(returnedCred.proof.proofValue).to.equal('z5QQ12zr5JvEsKvbnEN2EYZ6punR6Pa5wMJzywGJ2dCh6SSA5oQb9hBiGADsNTbs57bopArwdBHE9kEVemMxcu1Fq')
     })
   })
 
@@ -214,7 +214,7 @@ describe('api', () => {
         .send(statusUpdateBodyWithUnknownId)
 
       expect(response.header['content-type']).to.have.string('json')
-      expect(response.status).to.eql(404)
+      expect(response.status).to.equal(404)
     })
 
     it('calls status manager for protected tenant', async () => {
@@ -225,7 +225,7 @@ describe('api', () => {
         .send(statusUpdateBody)
 
       expect(response.header['content-type']).to.have.string('json')
-      expect(response.status).to.eql(200)
+      expect(response.status).to.equal(200)
     })
   })
 })
