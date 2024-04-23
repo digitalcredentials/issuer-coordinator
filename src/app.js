@@ -9,7 +9,7 @@ import verifyAuthHeader from './verifyAuthHeader.js'
 import { getConfig } from './config.js'
 
 class IssuingException extends Error {
-  constructor(code, message, error = null) {
+  constructor (code, message, error = null) {
     super(message)
     this.code = code
     this.error = error

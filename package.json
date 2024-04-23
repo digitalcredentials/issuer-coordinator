@@ -7,8 +7,8 @@
     "start": "node -r dotenv/config server.js",
     "dev": "nodemon -r dotenv/config server.js",
     "dev-noenv": "nodemon server.js",
-    "lint": "eslint .  --ext .js",
-    "lint-fix": "eslint --fix .  --ext .js",
+    "lint": "eslint . --ext .js",
+    "lint-fix": "eslint --fix . --ext .js",
     "test": "NODE_OPTIONS=--experimental-vm-modules npx mocha --timeout 10000 -r dotenv/config dotenv_config_path=src/test-fixtures/.env.testing src/app.test.js "
   },
   "dependencies": {

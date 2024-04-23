@@ -72,4 +72,4 @@ export {
   getUnsignedVCWithoutSuiteContext,
   getCredentialStatus,
   getUnsignedVCWithStatus
-};
+}
