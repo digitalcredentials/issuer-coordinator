@@ -18,7 +18,6 @@ let app
 
 describe('api', () => {
   before(async () => {
-    // testDIDSeed = await decodeSeed(process.env.TENANT_SEED_TESTING)
     testTenantToken = process.env.TENANT_TOKEN_PROTECTED_TEST
     testTenantToken2 = process.env.TENANT_TOKEN_PROTECTED_TEST_2
     statusUpdateBody = { credentialId: 'urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1', credentialStatus: [{ type: 'BitstringStatusListCredential', status: 'revoked' }] }
@@ -123,7 +122,6 @@ describe('api', () => {
     })
 
     it('returns signed vc for protected tenant', async () => {
-      // nock.recorder.rec()
       protectedNock()
       const sentCred = getUnsignedVC()
       const response = await request(app)
@@ -158,7 +156,6 @@ describe('api', () => {
     })
 
     it('update unprotected status when token not set for tenant in config', done => {
-      // nock.recorder.rec()
       unprotectedStatusUpdateNock()
       request(app)
         .post('/instance/un_protected_test/credentials/status')
@@ -204,7 +201,6 @@ describe('api', () => {
     })
 
     it('returns 404 for unknown cred id', async () => {
-      //  nock.recorder.rec()
       unknownStatusIdNock()
       const statusUpdateBodyWithUnknownId = JSON.parse(JSON.stringify(statusUpdateBody))
       statusUpdateBodyWithUnknownId.credentialId = 'kj09ij'
