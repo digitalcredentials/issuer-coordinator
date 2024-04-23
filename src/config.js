@@ -1,9 +1,11 @@
 let CONFIG
 const defaultPort = 4005
 const defaultTenantName = 'test'
+const demoTenantName = 'testing'
 const randomTenantName = 'random'
 const randtomTenantToken = 'UNPROTECTED'
 const defaultTenantToken = 'UNPROTECTED'
+const demoTenantToken = 'UNPROTECTED'
 
 const defaultStatusServiceEndpoint = 'STATUS:4008'
 const defaultSigningServiceEndpoint = 'SIGNER:4006'
@@ -17,8 +19,9 @@ export function initializeConfig () {
 }
 
 function parseTenantTokens () {
-  // first add default so it can be overridden by env
+  // first add default and demo so they can be overridden by env
   TENANT_ACCESS_TOKENS[defaultTenantName] = defaultTenantToken
+  TENANT_ACCESS_TOKENS[demoTenantName] = demoTenantToken
   // also add the 'random' tenant
   TENANT_ACCESS_TOKENS[randomTenantName] = randtomTenantToken
   const allEnvVars = process.env
