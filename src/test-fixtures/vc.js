@@ -40,7 +40,6 @@ const unsignedVC = {
   }
 }
 
-// "credentialStatus":
 const credentialStatus = {
   id: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16',
   type: 'BitstringStatusListEntry',
