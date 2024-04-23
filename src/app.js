@@ -66,8 +66,9 @@ export async function build (opts = {}) {
     return res.json(response.data)
   })
 
-  app.get('/did-web-generator', async (req, res, next) => {
-    const response = await axios.get(`http://${signingServiceEndpoint}/did-web-generator`)
+  app.post('/did-web-generator', async (req, res, next) => {
+    const body = req.body
+    const response = await axios.post(`http://${signingServiceEndpoint}/did-web-generator`, body)
     return res.json(response.data)
   })
   app.post('/instance/:tenantName/credentials/issue',
