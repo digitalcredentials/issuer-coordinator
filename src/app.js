@@ -104,7 +104,12 @@ export async function build (opts = {}) {
     })
 
   // updates the status
-  // the body will look like:  {credentialId: '23kdr', credentialStatus: [{type: 'BitstringStatusListCredential', status: 'revoked'}]}
+  /*
+  {
+    "credentialId": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1",
+    "credentialStatus": [{ "type": "BitstringStatusListCredential", "status": "revoked" }]
+  }
+  */
   app.post('/instance/:tenantName/credentials/status',
     async (req, res, next) => {
       if (!enableStatusService) return res.status(405).send('The status service has not been enabled.')

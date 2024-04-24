@@ -40,13 +40,22 @@ const unsignedVC = {
   }
 }
 
-const credentialStatus = {
-  id: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16',
-  type: 'BitstringStatusListEntry',
-  statusPurpose: 'revocation',
-  statusListIndex: 16,
-  statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4'
-}
+const credentialStatus = [
+  {
+    id: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#2',
+    type: 'BitstringStatusListEntry',
+    statusPurpose: 'revocation',
+    statusListIndex: 2,
+    statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4'
+  },
+  {
+    id: 'https://digitalcredentials.github.io/credential-status-jc-test/DKSPRCX9WB#5',
+    type: 'BitstringStatusListEntry',
+    statusPurpose: 'suspension',
+    statusListIndex: 5,
+    statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/DKSPRCX9WB'
+  }
+]
 
 const getUnsignedVC = () => JSON.parse(JSON.stringify(unsignedVC))
 const getUnsignedVCWithoutSuiteContext = () => {

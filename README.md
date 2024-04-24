@@ -36,7 +36,7 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 
 ## Summary
 
-Use this service to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) with a [status](https://www.w3.org/TR/vc-bitstring-status-list/) that can later be updated to revoke or suspend the credential.
+Use this service to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/) with a [status](https://www.w3.org/TR/vc-bitstring-status-list/) that can later be updated to revoke or suspend the credential.
 
 Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) HTTP endpoints:
 
@@ -61,7 +61,7 @@ Docker has made this straightforward, with [installers for Windows, Mac, and Lin
 
 Create a file called `docker-compose.yml` and add the following:
 
-```
+```yaml
 version: '3.5'
 services:
   coordinator:
@@ -76,13 +76,15 @@ services:
 
 From the terminal in the same directory that contains your `docker-compose.yml` file, run:
 
-```docker compose up```
+```bash
+docker compose up
+```
 
 ### Issue
 
 Issue cryptographically signed credentials by posting unsigned Verifiable Credentials to the issue endpoint, which signs the credential and returns it. Try out your test issuer with this cURL command, which you simply paste into the terminal:
 
-```
+```bash
 curl --location 'http://localhost:4005/instance/test/credentials/issue' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -134,7 +136,7 @@ curl --location 'http://localhost:4005/instance/test/credentials/issue' \
 
 This should return a fully formed and signed credential printed to the terminal, that should look something like this (it will be all smushed up, but you can format it in something like [JSONLint](https://jsonlint.com)):
 
-```
+```json
 {
     "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -188,7 +190,6 @@ This should return a fully formed and signed credential printed to the terminal,
         "proofValue": "z5fk6gq9upyZvcFvJdRdeL5KmvHr69jxEkyDEd2HyQdyhk9VnDEonNSmrfLAcLEDT9j4gGdCG24WHhojVHPbRsNER"
     }
 }
-
 ```
 
 WARNING: DO NOT USE THIS TO ISSUE `REAL` CREDENTIALS UNTIL YOU'VE [SET YOUR OWN SIGNING KEY](#generate-a-new-key)
@@ -237,17 +238,17 @@ The `did:key` DID is one of the simpler DID implementations and doesn't require 
 We've tried to simplify key generation by providing convenience endpoints in the issuer that you can use to generate a brand new key. You can generate a DID key with these cURL commands (in a terminal):
 
 - `did:key`:
-
-  ```
+  ```bash
   curl --location 'http://localhost:4005/did-key-generator'
   ```
 - `did:web`:
-
-  ```
+  ```bash
   curl \
     --location 'localhost:4006/did-web-generator' \
     --header 'Content-Type: application/json' \
-    --data '{"url": "https://raw.githubusercontent.com/user-or-org/did-web-test/main"}'
+    --data-raw '{
+      "url": "https://raw.githubusercontent.com/user-or-org/did-web-test/main"
+    }'
   ```
 
 These commands will return a JSON document that contains the following data:
@@ -258,7 +259,7 @@ These commands will return a JSON document that contains the following data:
 
 Here is an example output for `did:key`:
 
-```
+```json
 {
 	"seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6",
 	"did": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
@@ -287,7 +288,7 @@ Here is an example output for `did:key`:
 
 ...and here is an example output for `did:web` \*:
 
-```
+```json
 {
     "seed": "z1AcNXDnko1P6QMiZ3bxsraNvVtRbpXKeE8GNLDXjBJ5UHz",
     "decodedSeed": {...},
@@ -386,7 +387,7 @@ where `econ101` is the lower casing of the tenant name you'd have set in the env
 
 If you set a token for the tenant, you'll have to include that token in the auth header as a Bearer token. A cURL command to issue from the `econ101` tenant would then look exactly like the call in the example above, but with the bearer token set in the `Authorization` header like so:
 
-```
+```bash
 curl --location 'http://localhost:4005/instance/econ101/credentials/issue' \
 --header 'Authorization: Bearer 988DKLAJH93KDSFV' \
 --header 'Content-Type: application/json' \
@@ -493,35 +494,25 @@ The DCC provides another issuing service called the [exchange-coordinator](https
 
 ### Revoking and Suspending
 
-Revocation and suspension are more fully explained in the [Bitstring Status List](https://www.w3.org/TR/vc-bitstring-status-list/) specification and our implemenations thereof, but effectively, it amounts to POSTing an object to the revocation endpoint, like so:
+Revocation and suspension are more fully explained in the [Bitstring Status List](https://www.w3.org/TR/vc-bitstring-status-list/) specification and our implemenations thereof, but effectively, it amounts to POSTing an object to the status update endpoint, like so:
 
-```
-{
-	credentialId: 'id_added_by_status_manager_to_credentialStatus_propery_of_VC',
-	credentialStatus: [{
-		type: 'BitstringStatusListCredential',
-		status: 'revoked'
+```bash
+curl --location 'http://localhost:4005/instance/test/credentials/status' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+	"credentialId": "urn:uuid:951b475e-b795-43bc-ba8f-a2d01efd2eb1",
+	"credentialStatus": [{
+		"type": "BitstringStatusListCredential",
+		"status": "revoked"
 	}]
-}
+}'
 ```
 
-The important part there is the `credentialId`, which is listed in the `credentialStatus` section of the issued credential (`credentialStatus` is added by the status service), and which you have to store at the point when you issue the credential. The `credentialStatus` section looks like this:
+The important part there is the `credentialId`. If an issuer provides an `id` field on a credential, the status service will pick this up and save the credential under this ID, as long as it is a valid VC ID, per [these guidelines](https://www.w3.org/TR/vc-data-model-2.0/#identifiers) (e.g., URL, URN). If an ID is not provided, the status service will automatically generate one and attach it to the credential as the `id` field.
 
-```
-"credentialStatus": {
-  "id": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#16",
-  "type": "BitstringStatusListEntry",
-  "statusPurpose": "revocation",
-  "statusListIndex": 16,
-  "statusListCredential": "https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4"
-}
-```
+It is important that you save this value in your system during the issuance process, as you will need it to perform revocations and suspensions in the future. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the ID you need by searching the other fields like student name or student ID.
 
-...and the ID you need is in the `id` property.
-
-So again, an important point here is that you must store the `credentialStatus.id` value for all credentials that you issue. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the ID you need by searching the other fields like student name or student ID.
-
-NOTE: You'll of course have to enable [status updates](#enable-revocation-and-suspension) for this to work. If you've only done the Quick Start then you'll not be able to revoke and suspend.
+**Note:** You'll of course have to enable [status updates](#enable-revocation-and-suspension) for this to work. If you've only done the Quick Start then you'll not be able to revoke and suspend.
 
 ## Learner Credential Wallet
 
@@ -537,7 +528,7 @@ When running locally, the system picks up environment variables from the standar
 
 Clone code, cd into the directory, and run:
 
-```
+```bash
 npm install
 npm run dev
 ```
@@ -546,7 +537,9 @@ npm run dev
 
 Testing uses `supertest`, `mocha`, and `nock` to test the endpoints. To run tests:
 
-```npm run test```
+```bash
+npm run test
+```
 
 Note that when testing we don't actually want to make live HTTP calls to the services,
 so we've used nock to intercept the HTTP calls and return precanned data.

@@ -41,13 +41,22 @@ const signedVcWithStatus = {
     },
     type: 'AchievementSubject'
   },
-  credentialStatus: {
-    id: 'https://jchartrand.github.io/status-test-three/DKSPRCX9WB#1',
-    statusListCredential: 'https://jchartrand.github.io/status-test-three/DKSPRCX9WB',
-    statusListIndex: 1,
-    statusPurpose: 'revocation',
-    type: 'BitstringStatusListEntry'
-  },
+  credentialStatus: [
+    {
+      id: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#2',
+      type: 'BitstringStatusListEntry',
+      statusPurpose: 'revocation',
+      statusListIndex: 2,
+      statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4'
+    },
+    {
+      id: 'https://digitalcredentials.github.io/credential-status-jc-test/DKSPRCX9WB#5',
+      type: 'BitstringStatusListEntry',
+      statusPurpose: 'suspension',
+      statusListIndex: 5,
+      statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/DKSPRCX9WB'
+    }
+  ],
   proof: {
     created: '2023-08-23T12:44:15Z',
     proofPurpose: 'assertionMethod',
@@ -139,13 +148,22 @@ const unsignedVcWithStatus = {
       name: 'Introduction to Computer Science - CS50x'
     }
   },
-  credentialStatus: {
-    id: 'https://jchartrand.github.io/status-test-three/DKSPRCX9WB#1',
-    type: 'BitstringStatusListEntry',
-    statusPurpose: 'revocation',
-    statusListIndex: 1,
-    statusListCredential: 'https://jchartrand.github.io/status-test-three/DKSPRCX9WB'
-  }
+  credentialStatus: [
+    {
+      id: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4#2',
+      type: 'BitstringStatusListEntry',
+      statusPurpose: 'revocation',
+      statusListIndex: 2,
+      statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/XA5AAK1PV4'
+    },
+    {
+      id: 'https://digitalcredentials.github.io/credential-status-jc-test/DKSPRCX9WB#5',
+      type: 'BitstringStatusListEntry',
+      statusPurpose: 'suspension',
+      statusListIndex: 5,
+      statusListCredential: 'https://digitalcredentials.github.io/credential-status-jc-test/DKSPRCX9WB'
+    }
+  ]
 }
 
 export default () => {

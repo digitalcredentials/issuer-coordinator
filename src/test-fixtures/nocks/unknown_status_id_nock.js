@@ -2,7 +2,10 @@ import nock from 'nock'
 
 export default () => {
   nock('http://localhost:4008', { encodedQueryParams: true })
-    .post('/credentials/status', { credentialId: 'kj09ij', credentialStatus: [{ type: 'BitstringStatusListCredential', status: 'revoked' }] })
+    .post('/credentials/status', {
+      credentialId: 'kj09ij',
+      credentialStatus: [{ type: 'BitstringStatusListCredential', status: 'revoked' }]
+    })
     .reply(404, { code: 404, message: 'Credential ID not found.' }, [
       'X-Powered-By',
       'Express',
