@@ -1,6 +1,6 @@
 let CONFIG
 const defaultPort = 4005
-const defaultTenantName = 'test'
+export const defaultTenantName = 'test'
 const demoTenantName = 'testing'
 const randomTenantName = 'random'
 const randtomTenantToken = 'UNPROTECTED'
