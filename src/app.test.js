@@ -7,7 +7,7 @@ import protectedNock from './test-fixtures/nocks/protected_status_signing.js'
 import unprotectedStatusUpdateNock from './test-fixtures/nocks/unprotected_status_update.js'
 import unknownStatusIdNock from './test-fixtures/nocks/unknown_status_id_nock.js'
 import protectedStatusUpdateNock from './test-fixtures/nocks/protected_status_update.js'
-
+import healthzStatusSigningNock from './test-fixtures/nocks/healthz_status_signing.js'
 import { build } from './app.js'
 
 let testTenantToken
@@ -228,4 +228,34 @@ describe('api', () => {
       expect(response.status).to.eql(200)
     })
   })
+
+  describe('/healthz', () => {
+    it('returns 200 when healthy', async () => {
+      healthzStatusSigningNock()
+      await request(app)
+        .get(`/healthz`)
+        .expect('Content-Type', /json/)
+        .expect((res) => {
+          expect(res.body.message).to.contain('ok')
+        })
+        .expect(200)
+    })
+  })
+
+  describe('/healthz fail', () => {
+    // to force an error with the health check, we
+    // simply don't set the nock for the signing and 
+    // status services
+
+    it('returns 503 when not healthy', async () => {
+      await request(app)
+        .get(`/healthz`)
+        .expect('Content-Type', /json/)
+        .expect((res) => {
+          expect(res.body.error).to.contain('error')
+        })
+        .expect(503)
+    })
+  })
+
 })
