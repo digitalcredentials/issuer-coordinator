@@ -34,8 +34,7 @@ export async function build (opts = {}) {
         `${req.protocol}://${req.headers.host}/instance/${defaultTenantName}/credentials/issue`,
         getUnsignedVC()
       )
-      if (!data.proof)
-        throw new SigningException(503, 'issuer-coordinator healthz failed')
+      if (!data.proof) { throw new IssuingException(503, 'issuer-coordinator healthz failed') }
     } catch (e) {
       console.log(`exception in healthz: ${JSON.stringify(e)}`)
       return res.status(503).json({

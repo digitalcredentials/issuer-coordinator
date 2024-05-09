@@ -35,13 +35,13 @@ axios
     process.exit(1)
   })
 
-async function notify(message) {
+async function notify (message) {
   console.log(message)
   if (shouldSendEmail) await sendMail(message)
   if (shouldPostToWebHook) await postToWebHook(message)
 }
 
-async function postToWebHook(text) {
+async function postToWebHook (text) {
   await axios
     .post(process.env.HEALTH_CHECK_WEB_HOOK, { text })
     .catch((error) => {
@@ -49,7 +49,7 @@ async function postToWebHook(text) {
     })
 }
 
-async function sendMail(message) {
+async function sendMail (message) {
   const messageParams = {
     from: process.env.HEALTH_CHECK_EMAIL_FROM,
     to: process.env.HEALTH_CHECK_EMAIL_RECIPIENT,
