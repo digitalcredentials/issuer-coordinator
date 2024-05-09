@@ -43,7 +43,7 @@ Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) HTTP endpoints:
  * [POST /credentials/issue](https://w3c-ccg.github.io/vc-api/#issue-credential)
  * [POST /credentials/status](https://w3c-ccg.github.io/vc-api/#update-status)
 
-We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
+We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you.
 
 In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are wired together in a simple Docker Compose network that pulls images from Docker Hub.
 
@@ -468,7 +468,7 @@ In addition to the variables defined above, you will also need to provide enviro
 
 ### DID Registries
 
-To know that a credential was signed with a key that is in fact owned by the claimed issuer, the key (encoded as a DID) has to be confirmed as really belonging to that issuer. This is typically done by adding the DID to a well known registry that the verifier checks when verifying a credential.
+To know that a credential was signed with a key that is in fact owned by the claimed issuer, the key (encoded as a [DID](https://www.w3.org/TR/did-core/)) has to be confirmed as really belonging to that issuer. This is typically done by adding the DID to a well known registry that the verifier checks when verifying a credential.
 
 The DCC provides a number of registries that work with the verifiers in the [Learner Credential Wallet (LCW)](#learner-credential-wallet) and in the online web based [Verifier Plus](https://verifierplus.org). The DCC registries use GitHub for storage. To request that your DID be added to a registry, submit a pull request in which you've added your [DID](https://www.w3.org/TR/did-core/) to the registry file.
 
@@ -541,8 +541,7 @@ Testing uses `supertest`, `mocha`, and `nock` to test the endpoints. To run test
 npm run test
 ```
 
-Note that when testing we don't actually want to make live HTTP calls to the services,
-so we've used nock to intercept the HTTP calls and return precanned data.
+Note that when testing we don't actually want to make live HTTP calls to the services, so we've used Nock to intercept the HTTP calls and return precanned data.
 
 ## Contribute
 
