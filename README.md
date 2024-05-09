@@ -27,6 +27,7 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 - [Usage](#usage)
   - [Issuing](#issuing)
   - [Revoking](#revoking)
+- [Health Check](#health-check)
 - [Learner Credential Wallet](#learner-credential-wallet)
 - [Development](#development)
   - [Testing](#testing)
@@ -41,6 +42,15 @@ Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) http endpoints:
 
  * [POST /credentials/issue](https://w3c-ccg.github.io/vc-api/#issue-credential)
  * [POST /credentials/status](https://w3c-ccg.github.io/vc-api/#update-status)
+
+ and additionally two utility endpoints for generating new dids:
+
+ * [GET /did-key-generator](#didkey)
+ * [POST /did-web-generator](#didweb)
+
+and finally an endpoint that returns the health of the service, and is typically meant to be used with Docker HEALTHCHECK:
+
+ * [GET /heathz]()
 
 We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
 
@@ -64,11 +74,11 @@ Create a file called docker-compose.yml and add the following
 version: '3.5'
 services:
   coordinator:
-    image: digitalcredentials/issuer-coordinator:0.2.0
+    image: digitalcredentials/issuer-coordinator:0.3.0
     ports:
       - "4005:4005"
   signer:
-    image: digitalcredentials/signing-service:0.3.0
+    image: digitalcredentials/signing-service:0.4.0
 ```
 
 ### Run it
@@ -196,7 +206,7 @@ NOTE: CURL can get a bit clunky if you want to experiment, so you might consider
 
 NOTE: Revocation is not enabled in the Quick Start. You've got to setup a couple of thigs to [enable revocation](#enable-revocation).
 
-Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production).
+Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production). First a quick word about versioning, and then on to configuration...
 
 ## Versioning
 
@@ -278,11 +288,11 @@ TENANT_SEED_ECON101=UNPROTECTED
 
 If you set a value other than UNPROTECTED then that value must be included as a Bearer token in the Authorization header of any calls to the endpoint.
 
-We also suggest using IP filtering on your endpoints to only allow set IPs to access the issuer.  Set filtering in your nginx or similar.
+We also suggest using IP filtering on your endpoints to only allow set IPs to access the issuer.  Set filtering in your nginx config, or similar.
 
 ##### .signing-service.env
 
-The [signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator) explains how to set your DID, whether using did:key or did:web. Note that the signing-service docs describe using convenience endpoints to generate new DIDs. You can call those endpoints directly in the signing-serive, or call the same endpoints in the coordinator, as described above in the [Generate a new key section](#generate-a-new-key). The coordinator endpoints simply forward the request to the signing-service.
+The [signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator) explains how to set your DID, whether using did:key or did:web. Note that the signing-service docs describe using convenience endpoints to generate new DIDs. You can call those endpoints directly in the signing-service, or call the same endpoints in the coordinator, as described above in the [Generate a new key section](#generate-a-new-key). The coordinator endpoints simply forward the request to the signing-service.
 
 #### Use a tenant
 
@@ -386,7 +396,7 @@ For the moment, the issuer is set up to use the did:key implemenation of a DID w
 
 ### did:web
 
-The did:web implementation is likely where many implementations will end up, and so you'll eventually want to move to becuase it allows you to rotate (change) your signing keys whithout having to update every document that points at the old keys.  We'll provide did:web support in time, but if you need it now just let us know.
+The did:web implementation is likely where many implementations will end up, and so you'll eventually want to move to becuase it allows you to rotate (change) your signing keys whithout having to update every document that points at the old keys.
 
 ## Usage
 
@@ -439,6 +449,17 @@ and the id you need is in the `id` property.
 So again, an important point here is that you must store the credentialStatus.id for all credentials that you issue. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the id you need by searching the other fields like student name or student id.
 
 NOTE: you'll of course have to have [set up revocation](#enable-revocation) for this to work. If you've only done the QuickStart then you'll not be able to revoke.
+
+## Health Check
+
+Docker has a [HEALTHCHECK](https://docs.docker.com/reference/dockerfile/#healthcheck) option for monitoring the
+state (health) of a container. We've included an endpoint `GET /healthz` that checks the health of the signing service (by running a test signature). The endpoint can be directly specified in a CURL or WGET call on the HEALTHCHECK, but we also provide a [healthcheck.js](./healthcheck.js) function that can be similarly invoked by the HEALTHCHECK and which itself hits the `healthz` endpoint, and additionally provides options for both email and Slack notifications when the service is unhealthy. 
+
+You can see how we've configured the HEALTHCHECK in our [example compose files](https://github.com/digitalcredentials/docs/blob/main/deployment-guide/DCCDeploymentGuide.md#docker-compose-examples). Our compose files also include an example of how to use [autoheal](https://github.com/willfarrell/docker-autoheal) together with HEALTHCHECK to restart an unhealthy container.
+
+If you want failing health notifications sent to a Slack channel, you'll have to set up a Slack [web hook](https://api.slack.com/messaging/webhooks).
+
+If you want failing health notifications sent to an email address, you'll need an SMTP server to which you can send emails, so something like sendgrid, mailchimp, mailgun, or even your own email account if it allows direct SMTP sends. Gmail can apparently be configured to so so.
 
 ## Learner Credential Wallet
 
