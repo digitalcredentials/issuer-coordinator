@@ -233,7 +233,7 @@ describe('api', () => {
     it('returns 200 when healthy', async () => {
       healthzStatusSigningNock()
       await request(app)
-        .get(`/healthz`)
+        .get('/healthz')
         .expect('Content-Type', /json/)
         .expect((res) => {
           expect(res.body.message).to.contain('ok')
@@ -244,12 +244,12 @@ describe('api', () => {
 
   describe('/healthz fail', () => {
     // to force an error with the health check, we
-    // simply don't set the nock for the signing and 
+    // simply don't set the nock for the signing and
     // status services
 
     it('returns 503 when not healthy', async () => {
       await request(app)
-        .get(`/healthz`)
+        .get('/healthz')
         .expect('Content-Type', /json/)
         .expect((res) => {
           expect(res.body.error).to.contain('error')
@@ -257,5 +257,4 @@ describe('api', () => {
         .expect(503)
     })
   })
-
 })
