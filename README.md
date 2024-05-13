@@ -59,7 +59,7 @@ Docker have made this straightforward, with [installers for Windows, Mac, and Li
 
 ### Make a Docker Compose file
 
-Create a file called docker-compose.yml and add the following
+Create a file called compose.yaml and add the following
 
 ```
 version: '3.5'
@@ -74,7 +74,7 @@ services:
 
 ### Run it
 
-From the terminal in the same directory that contains your docker-compose.yml file:
+From the terminal in the same directory that contains your compose.yaml file:
 
 ```docker compose up```
 
@@ -207,7 +207,7 @@ The images on Docker Hub will of course be updated to add new functionality and 
 
 We DO NOT provide a `latest` tag so you must provide a tag name (i.e, the version number) for the images in your docker compose file, as we've done [here](./docker-compose.yml).
 
-To ensure you've got compatible versions of the services and the coordinator, the `major` number for each should match. At the time of writing, the versions for each are at 0.2.0, and the `major` number (the leftmost number) agrees across all three.
+To ensure you've got compatible versions of the services and the coordinator, take a look at our [sample compose files](https://github.com/digitalcredentials/docs/blob/main/deployment-guide/DCCDeploymentGuide.md#docker-compose-examples).
 
 If you do ever want to work from the source code in the repository and build your own images, we've tagged the commits in Github that were used to build the corresponding Docker image. So a github tag of v0.1.0 coresponds to a docker image tag of 0.1.0
 
