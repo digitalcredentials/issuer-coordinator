@@ -27,6 +27,7 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 - [Usage](#usage)
   - [Issuing](#issuing)
   - [Revoking](#revoking)
+- [Logging](#logging)
 - [Health Check](#health-check)
 - [Learner Credential Wallet](#learner-credential-wallet)
 - [Development](#development)
@@ -222,9 +223,44 @@ If you do ever want to work from the source code in the repository and build you
 
 ## Configuration
 
-There are a few things you'll want to configure, in particular setting your own signing keys (so that only you can sign your credentials). Other options include enabling revocation, and allowing for 'multi-tenant' signing, which you might use, for example, to sign credentials for different courses with a different key.
+There are a few things you'll want to configure, in particular setting your own signing keys (so that only you can sign your credentials). Other options include enabling revocation, enabling healthchecks, and allowing for 'multi-tenant' signing, which you might use, for example, to sign credentials for different courses with a different key.
 
-The app is configured with three .env files:
+Because the issuer-coordinator coordinates calls to other microservices, you'll need to configure both the coordinator itself, and the microservices it calls.
+
+You can set the environment variables in any of the usual ways that environment variables are set, including .env files or even setting the variables directly in the docker compose yaml file. Our quick start compose files, for example, all set the variables directly in the compose so as to make it possible to start up the compose with a single command. Further below we describe sample .env files for the coorindator and dependent services.
+
+### Environment Variables
+
+The variables that can be configured specifically for the issuer-coordinator:
+
+
+TO ADD:
+    enableAccessLogging: env.ENABLE_ACCESS_LOGGING?.toLowerCase() === 'true',
+    enableStatusService: env.ENABLE_STATUS_SERVICE?.toLowerCase() === 'true',
+    statusServiceEndpoint: env.STATUS_SERVICE_ENDPOINT ? env.STATUS_SERVICE_ENDPOINT : defaultStatusServiceEndpoint,
+    signingServiceEndpoint: env.SIGNING_SERVICE_ENDPOINT ? env.SIGNING_SERVICE_ENDPOINT : defaultSigningServiceEndpoint,
+
+| Key | Description | Default | Required |
+| --- | --- | --- | --- |
+| `PORT` | http port on which to run the express app | 4005 | no |
+| `ENABLE_HTTPS_FOR_DEV` | runs the dev server over https - ONLY FOR DEV - typically to allow CORS calls from a browser | false | no |
+| `TENANT_TOKEN_{TENANT_NAME}` | see [tenants](#tenants) section for instructions | no | no |
+| `ENABLE_ACCESS_LOGGING` | log all http calls to the service - see [Logging](#logging) | true | no |
+| `ERROR_LOG_FILE` | log file for all errors - see [Logging](#logging) | no | no |
+| `LOG_ALL_FILE` | log file for everything - see [Logging](#logging) | no | no |
+| `CONSOLE_LOG_LEVEL` | console log level - see [Logging](#logging) | silly | no |
+| `LOG_LEVEL` | log level for application - see [Logging](#logging) | silly | no |
+| `HEALTH_CHECK_SMTP_HOST` | SMTP host for unhealthy notification emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_SMTP_USER` | SMTP user for unhealthy notification emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_SMTP_PASS` | SMTP password for unhealthy notification emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_EMAIL_FROM` | name of email sender for unhealthy notifications emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_EMAIL_RECIPIENT` | recipient when unhealthy - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_EMAIL_SUBJECT` | email subject when unhealthy - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_WEB_HOOK` | posted to when unhealthy - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_SERVICE_URL` | local url for this service - see [Health Check](#health-check) | http://SIGNER:4006/healthz | no |
+| `HEALTH_CHECK_SERVICE_NAME` | service name to use in error messages - see [Health Check](#health-check) | SIGNING-SERVICE | no |
+
+The environment variables can be set directly in the docker compose using the ENV directive, or alternatively with three .env files:
 
 * [.coordinator.env](./.coordinator.env)
 * [.signing-service.env](./.signing-service.env)
@@ -241,7 +277,6 @@ To issue your own credentials you must generate your own signing key and keep it
 #### did:key
 
 `curl --location 'http://localhost:4005/did-key-generator'`
-
 
 #### did:web
 
@@ -449,6 +484,55 @@ and the id you need is in the `id` property.
 So again, an important point here is that you must store the credentialStatus.id for all credentials that you issue. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the id you need by searching the other fields like student name or student id.
 
 NOTE: you'll of course have to have [set up revocation](#enable-revocation) for this to work. If you've only done the QuickStart then you'll not be able to revoke.
+
+## Logging
+
+We support the following log levels:
+
+```
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  verbose: 4,
+  debug: 5,
+  silly: 6
+```
+
+Logging is configured with environment variables, as defined in the [Environment Variables](#environment-variables) section.
+
+By default, everything is logged to the console (log level `silly`).
+
+All http calls to the service are logged by default, which might bloat the log. You can disable access logging with:
+
+```ENABLE_ACCESS_LOGGING=false```
+
+You may set the log level for the application as whole, e.g.,
+
+```LOG_LEVEL=http```
+
+Which would only log messages with severity 'http' and all below it (info, warn, error).
+
+The default is to log everything (level 'silly').
+
+You can also set the log level for console logging, e.g.,
+
+```CONSOLE_LOG_LEVEL=debug```
+
+This would log everything for severity 'debug' and lower (i.e., verbose, http, info, warn, error). This of course assumes that you've set the log level for the application as a whole to at least the same level.
+
+The default log level for the console is 'silly', which logs everything.
+
+There are also two log files that can be enabled:
+
+* errors (only logs errors)
+* all (logs everything - all log levels)
+
+Enable each log by setting an env variable for each, indicating the path to the appropriate file, like this example:
+
+```
+LOG_ALL_FILE=logs/all.log
+ERROR_LOG_FILE=logs/error.log
 
 ## Health Check
 
