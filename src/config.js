@@ -1,5 +1,7 @@
 let CONFIG
 const defaultPort = 4005
+const defaultConsoleLogLevel = 'silly'
+const defaultLogLevel = 'silly'
 export const defaultTenantName = 'test'
 const demoTenantName = 'testing'
 const randomTenantName = 'random'

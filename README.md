@@ -13,6 +13,10 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 ## Table of Contents
 
 - [Summary](#summary)
+- [API](#api)
+  - [VC-API](#vc-api)
+  - [DID Generators](#did-generators)
+  - [healthz endpoint](#healthz-endpoint)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
   - [Generate a New Key](#generate-a-new-key)
@@ -37,25 +41,11 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 
 ## Summary
 
-Use this server to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) with a [revocation status](https://www.w3.org/TR/vc-status-list/) that can later be updated to revoke the credential.
+Use this app to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) with a [revocation status](https://www.w3.org/TR/vc-status-list/) that can later be updated to revoke the credential.
 
-Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) http endpoints:
+We've tried hard to make this simple to install and maintain, and consequently easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
 
- * [POST /credentials/issue](https://w3c-ccg.github.io/vc-api/#issue-credential)
- * [POST /credentials/status](https://w3c-ccg.github.io/vc-api/#update-status)
-
- and additionally two utility endpoints for generating new dids:
-
- * [GET /did-key-generator](#didkey)
- * [POST /did-web-generator](#didweb)
-
-and finally an endpoint that returns the health of the service, and is typically meant to be used with Docker HEALTHCHECK:
-
- * [GET /heathz]()
-
-We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
-
-In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are wired together in a simple docker compose network that pulls images from DockerHub.
+In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are therefore easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are typically wired together in a simple docker compose network that pulls images from DockerHub.
 
 We've made installation a gradual process starting with a simple version that can be up and running in about five minutes, and then progressing with configuration as needed.
 
@@ -421,13 +411,13 @@ The `CRED_STATUS_DID_SEED` is set to a default seed, usable by anyone for testin
 
 ### DID Registries
 
-To know that a credential was signed with a key that is in fact owned by the claimed issuer, the key (encoded as a DID) has to be confirmed as really belonging to that issuer.  This is typically done by adding the DID to a well known registry that the verifier checks when verifying a credential.
+To know that a credential was signed with a key that is in fact owned by the claimed issuer, the key (encoded as a [DID](https://www.w3.org/TR/did-core/)) has to be confirmed as really belonging to that issuer.  This is typically done by adding the [DID](https://www.w3.org/TR/did-core/) to a well known registry that the verifier checks when verifying a credential.
 
 The DCC provides a number of registries that work with the verifiers in the Learner Credential Wallet and in the online web based [Verifier Plus](https://verifierplus.org).  The DCC registries use Github for storage.  To request that your DID be added to a registry, submit a pull request in which you've added your [DID](https://www.w3.org/TR/did-core/) to the registry file.
 
 ### did:key
 
-For the moment, the issuer is set up to use the did:key implemenation of a DID which is one of the simpler implementations and doesn't require that the DID document be hosted anywhere.
+For the moment, the issuer is set up to use the did:key implemenation of a [DID](https://www.w3.org/TR/did-core/) which is one of the simpler implementations and doesn't require that the [DID](https://www.w3.org/TR/did-core/) document be hosted anywhere.
 
 ### did:web
 
@@ -484,6 +474,30 @@ and the id you need is in the `id` property.
 So again, an important point here is that you must store the credentialStatus.id for all credentials that you issue. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the id you need by searching the other fields like student name or student id.
 
 NOTE: you'll of course have to have [set up revocation](#enable-revocation) for this to work. If you've only done the QuickStart then you'll not be able to revoke.
+
+### API
+
+#### VC-API
+
+This app implements two [VC-API](https://w3c-ccg.github.io/vc-api/) http endpoints:
+
+ * [POST /credentials/issue](https://w3c-ccg.github.io/vc-api/#issue-credential)
+ * [POST /credentials/status](https://w3c-ccg.github.io/vc-api/#update-status)
+
+The hope is that by following the VC-API spec, you should be able to substitute any implementation of the spec, thereby allowing you to later switch implementations and/or vendors.
+
+#### DID Generators
+
+The app additionally two utility endpoints for generating new [DIDs](https://www.w3.org/TR/did-core/):
+
+ * [GET /did-key-generator](#didkey)
+ * [POST /did-web-generator](#didweb)
+
+#### healthz endpoint
+
+and finally an endpoint that returns the health of the service, and is typically meant to be used with Docker [HEALTHCHECK](https://docs.docker.com/reference/dockerfile/#healthcheck):
+
+ * [GET /heathz]()
 
 ## Logging
 
