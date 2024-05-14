@@ -41,17 +41,18 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 
 ## Summary
 
-Use this app to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) with a [revocation status](https://www.w3.org/TR/vc-status-list/) that can later be updated to revoke the credential.
+Use this app to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) with or without a [revocation status](https://www.w3.org/TR/vc-status-list/) that can later be updated to revoke the credential.
 
 We've tried hard to make this simple to install and maintain, and consequently easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you. 
 
 In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are therefore easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are typically wired together in a simple docker compose network that pulls images from DockerHub.
 
-We've made installation a gradual process starting with a simple version that can be up and running in about five minutes, and then progressing with configuration as needed.
+We've made installation and evaluation a gradual process starting with a simple version that can be up and running in about five minutes, and then progressing with configuration as needed.
 
 ## Quick Start
 
-These four step should take less than five minutes in total:
+These four steps should take less than five minutes, and will get you started with your own compose file. Alternatively, we've got a hosted compose file that makes things even a bit easier, the instructions for which are [here](https://github.com/digitalcredentials/docs/blob/main/deployment-guide/DCCDeploymentGuide.md#simple-signing-demo
+), but the quick start we now describe is pretty easy too.
 
 ### Install Docker
 
@@ -215,20 +216,13 @@ If you do ever want to work from the source code in the repository and build you
 
 There are a few things you'll want to configure, in particular setting your own signing keys (so that only you can sign your credentials). Other options include enabling revocation, enabling healthchecks, and allowing for 'multi-tenant' signing, which you might use, for example, to sign credentials for different courses with a different key.
 
-Because the issuer-coordinator coordinates calls to other microservices, you'll need to configure both the coordinator itself, and the microservices it calls.
+Because the issuer-coordinator coordinates calls to other microservices, you'll need to configure both the coordinator itself, and the microservices it calls. Read about configuring the status-service in the [Enable Revocation](#enable-revocation) section and read about configuring the signing-service in the [Add a Tenant](#add-a-tenant) section.
 
-You can set the environment variables in any of the usual ways that environment variables are set, including .env files or even setting the variables directly in the docker compose yaml file. Our quick start compose files, for example, all set the variables directly in the compose so as to make it possible to start up the compose with a single command. Further below we describe sample .env files for the coorindator and dependent services.
+You can set the environment variables in any of the usual ways that environment variables are set, including .env files or even setting the variables directly in the docker compose yaml file. Our quick start compose files, for example, all set the variables directly in the compose so as to make it possible to start up the compose with a single command. Further below we describe sample .env files for the coordinator and the dependent services.
 
 ### Environment Variables
 
 The variables that can be configured specifically for the issuer-coordinator:
-
-
-TO ADD:
-    enableAccessLogging: env.ENABLE_ACCESS_LOGGING?.toLowerCase() === 'true',
-    enableStatusService: env.ENABLE_STATUS_SERVICE?.toLowerCase() === 'true',
-    statusServiceEndpoint: env.STATUS_SERVICE_ENDPOINT ? env.STATUS_SERVICE_ENDPOINT : defaultStatusServiceEndpoint,
-    signingServiceEndpoint: env.SIGNING_SERVICE_ENDPOINT ? env.SIGNING_SERVICE_ENDPOINT : defaultSigningServiceEndpoint,
 
 | Key | Description | Default | Required |
 | --- | --- | --- | --- |
@@ -249,12 +243,20 @@ TO ADD:
 | `HEALTH_CHECK_WEB_HOOK` | posted to when unhealthy - see [Health Check](#health-check) | no | no |
 | `HEALTH_CHECK_SERVICE_URL` | local url for this service - see [Health Check](#health-check) | http://SIGNER:4006/healthz | no |
 | `HEALTH_CHECK_SERVICE_NAME` | service name to use in error messages - see [Health Check](#health-check) | SIGNING-SERVICE | no |
+| `ENABLE_STATUS_SERVICE` | whether to allocate status - see [Enable Revocation](#enable-revocation) | false | no |
+| `STATUS_SERVICE_ENDPOINT` | the endpoint of the status service | STATUS:4008 | no |
+| `SIGNING_SERVICE_ENDPOINT` | the endpoint of the signing service | SIGNER:4006 | no |
 
-The environment variables can be set directly in the docker compose using the ENV directive, or alternatively with three .env files:
+The environment variables can be set directly in the docker compose using the ENV directive, or alternatively within an .env file like this one:
 
 * [.coordinator.env](./.coordinator.env)
+
+You'll also need .env files for the signing and status services, something like so:
+
 * [.signing-service.env](./.signing-service.env)
 * [.status-service.env](./.status-service.env)
+
+Note: the env variables for the status service and signing service are described below in the [Enable Revocation](#enable-revocation) and [Add a Tenant](#add-a-tenant) sections respectively.
 
 If you've used the QuickStart docker-compose.yml, then you'll have to change it a bit to point at these files. Alternatively, we've pre-configured this [docker-compose.yml](./docker-compose.yml), though, so you can just use that.
 
@@ -262,7 +264,7 @@ The issuer is pre-configured with a preset signing key for testing that can only
 
 ### Generate a new key
 
-To issue your own credentials you must generate your own signing key and keep it private.  We've tried to make that a little easier by providing two convenience endpoints in the issuer that you can use to generate a brand new random key - one using the did:key method and one using the did:web method. You can hit the endpoints with the following CURL command (in a terminal):
+To issue your own credentials you must generate your own signing key and keep it private.  We've tried to make that a little easier by providing two endpoints in the signing-service that you can use to generate a brand new random key - one using the did:key method and one using the did:web method. You can hit the endpoints directly on the signing-service or if you've got your issuer-coordinator running, you can hit the following convenience endpoints, which simply forward the request to the signer (and return the result) with the following CURL commands (in a terminal):
 
 #### did:key
 
@@ -272,9 +274,14 @@ To issue your own credentials you must generate your own signing key and keep it
 
 `curl --location 'http://localhost:4005/did-web-generator'`
 
-Both endpoints simply forward your call to the equivalent endpoint in the signing-service. You can read about the endpoints in the [Signing Key section of the signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator).
+Again, both endpoints simply forward your call to the equivalent endpoint in the signing-service. You can read about the endpoints in the [Signing Key section of the signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator).
 
-Now that you've got your key you'll want to enable it by adding a new tenant to use the seed...
+Now that you've got your key you'll need to do two things:
+
+* register it with the signing-service 
+* enable it the issuer-coordinator
+
+We describe both next...
 
 ### Tenants
 
@@ -317,7 +324,9 @@ We also suggest using IP filtering on your endpoints to only allow set IPs to ac
 
 ##### .signing-service.env
 
-The [signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator) explains how to set your DID, whether using did:key or did:web. Note that the signing-service docs describe using convenience endpoints to generate new DIDs. You can call those endpoints directly in the signing-service, or call the same endpoints in the coordinator, as described above in the [Generate a new key section](#generate-a-new-key). The coordinator endpoints simply forward the request to the signing-service.
+The [signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator) explains how to set your DID for use by the signing service, whether using did:key or did:web. 
+
+Note that the signing-service docs describe using convenience endpoints to generate new DIDs. You can call those endpoints directly in the signing-service, or call the same endpoints in the issuer-coordinator, as described above in the [Generate a new key section](#generate-a-new-key). The coordinator endpoints simply forward the request to the signing-service.
 
 #### Use a tenant
 
