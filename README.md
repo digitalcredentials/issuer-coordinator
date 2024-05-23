@@ -2,7 +2,7 @@
 
 [![Build status](https://img.shields.io/github/actions/workflow/status/digitalcredentials/issuer-coordinator/main.yml?branch=main)](https://github.com/digitalcredentials/issuer-coordinator/actions?query=workflow%3A%22Node.js+CI%22)
 
-An express app that signs Verifiable Credentials. The app coordinates calls to a signing service and a status service, each themselves running as express apps, with all three apps running together within Docker Compose.
+An Express app that signs Verifiable Credentials. The app coordinates calls to a signing service and a status service, each themselves running as express apps, with all three apps running together within Docker Compose.
 
 ![services-flow](./images/services-flow.jpg)
 
@@ -14,8 +14,13 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 
 - [Summary](#summary)
 - [Quick Start](#quick-start)
+  - [Install Docker](#install-docker)
+  - [Create Docker Compose File](#create-docker-compose-file)
+  - [Run Service](#run-service)
+  - [Issue Credentials](#issue-credentials)
+- [Versioning](#versioning)
 - [Configuration](#configuration)
-  - [Generate a New Key](#generate-a-new-key)
+  - [Generate New Key](#generate-new-key)
   - [Tenants](#tenants)
     - [Add a Tenant](#add-a-tenant)
       - [.coordinator.env](#coordinatorenv)
@@ -57,7 +62,7 @@ These four steps should take less than five minutes in total:
 
 Docker has made this straightforward, with [installers for Windows, Mac, and Linux](https://docs.docker.com/engine/install/) that make it as easy to install Docker as any other application.
 
-### Make a Docker Compose file
+### Create Docker Compose File
 
 Create a file called `docker-compose.yml` and add the following:
 
@@ -72,7 +77,7 @@ services:
     image: digitalcredentials/signing-service:0.3.0
 ```
 
-### Run it
+### Run Service
 
 From the terminal in the same directory that contains your `docker-compose.yml` file, run:
 
@@ -80,7 +85,7 @@ From the terminal in the same directory that contains your `docker-compose.yml` 
 docker compose up
 ```
 
-### Issue
+### Issue Credentials
 
 Issue cryptographically signed credentials by posting unsigned Verifiable Credentials to the issue endpoint, which signs the credential and returns it. Try out your test issuer with this cURL command, which you simply paste into the terminal:
 
@@ -196,7 +201,7 @@ WARNING: DO NOT USE THIS TO ISSUE `REAL` CREDENTIALS UNTIL YOU'VE [SET YOUR OWN 
 
 NOTE: cURL can get a bit clunky if you want to experiment, so you might consider trying [Postman](https://www.postman.com/downloads/) which makes it very easy to construct and send HTTP calls.
 
-NOTE: Status updates are not enabled in the Quick Start. You've got to setup a couple of things to [enable revocation and suspension](#enable-revocation-and-suspension).
+NOTE: Status updates are not enabled in the Quick Start. You've got to setup a couple of things to [enable revocation and suspension](#revocation-and-suspension).
 
 Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production).
 
@@ -219,17 +224,17 @@ There are a few things you'll want to configure. These include, but may not be l
 * Revocation/suspension support
 * "Multi-tenant" signing, which enables you to use different keys for different credentialing purposes (e.g., signing credentials for different courses)
 
-The app is configured with three .env files:
+The app is configured with three `.env` files (Note that you only need to configure one of the `.status-service-*.env` files, depending on if you are using the database status manager or the Git status manager):
 
 * [.coordinator.env](.coordinator.env)
 * [.signing-service.env](.signing-service.env)
-* [.status-service.env](.status-service.env)
+* [.status-service-db.env](.status-service-db.env) OR [.status-service-git.env](.status-service-git.env)
 
 If you've used the Quick Start `docker-compose.yml`, then you'll have to change it a bit to point at these files. Alternatively, we've pre-configured this [docker-compose.yml](docker-compose.yml), though, so you can just use that.
 
-The issuer is pre-configured with a preset signing key for testing that can only be used for testing and evaluation. Any credentials signed with this key are meaningless because anyone else can use it to sign credentials, and so could create fake copies of your credentials which would appear to be properly signed. There would be no way to know that it was fake. So, you'll want to add our own key which you do by generating a new key and setting it for a new tenant name.
+The issuer is pre-configured with a default signing key for testing that can only be used for testing and evaluation. Any credentials signed with this key are meaningless because anyone else can use it to sign credentials, and so could create fake copies of your credentials which would appear to be properly signed. There would be no way to know that it was fake. So, you'll want to add our own key which you do by generating a new key and setting it for a new tenant name.
 
-### Generate a new key
+### Generate New Key
 
 To issue your own credentials, you must generate your own signing key and keep it private. At the moment, the issuer supports two [DID](https://www.w3.org/TR/did-core/) key formats/protocols: `did:key` and `did:web`.
 
@@ -255,34 +260,38 @@ These commands will return a JSON document that contains the following data:
 
 - a secret seed
 - the corresponding DID
-- the corresponding DID Document
+- the corresponding DID document
 
 Here is an example output for `did:key`:
 
 ```json
 {
-	"seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6",
-	"did": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-	"didDocument": {
-		"@context": ["https://www.w3.org/ns/did/v1", "https://w3id.org/security/suites/ed25519-2020/v1", "https://w3id.org/security/suites/x25519-2020/v1"],
-		"id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-		"verificationMethod": [{
-			"id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-			"type": "Ed25519VerificationKey2020",
-			"controller": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-			"publicKeyMultibase": "z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"
-		}],
-		"authentication": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"assertionMethod": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"capabilityDelegation": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"capabilityInvocation": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
-		"keyAgreement": [{
-			"id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6LSnYW9e4Q4EXTvdjDhKyr2D1ghBfSLa5dJGBfzjG6hyPEt",
-			"type": "X25519KeyAgreementKey2020",
-			"controller": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
-			"publicKeyMultibase": "z6LSnYW9e4Q4EXTvdjDhKyr2D1ghBfSLa5dJGBfzjG6hyPEt"
-		}]
-	}
+  "seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6",
+  "did": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
+  "didDocument": {
+    "@context": [
+      "https://www.w3.org/ns/did/v1",
+      "https://w3id.org/security/suites/ed25519-2020/v1",
+      "https://w3id.org/security/suites/x25519-2020/v1"
+    ],
+    "id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
+    "verificationMethod": [{
+      "id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
+      "type": "Ed25519VerificationKey2020",
+      "controller": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
+      "publicKeyMultibase": "z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"
+    }],
+    "authentication": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
+    "assertionMethod": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
+    "capabilityDelegation": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
+    "capabilityInvocation": ["did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4"],
+    "keyAgreement": [{
+      "id": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4#z6LSnYW9e4Q4EXTvdjDhKyr2D1ghBfSLa5dJGBfzjG6hyPEt",
+      "type": "X25519KeyAgreementKey2020",
+      "controller": "did:key:z6MkweTn1XVAiFfHjiH48oLknjNqRs43ayzguc8G8VbEAVm4",
+      "publicKeyMultibase": "z6LSnYW9e4Q4EXTvdjDhKyr2D1ghBfSLa5dJGBfzjG6hyPEt"
+    }]
+  }
 }
 ```
 
@@ -290,25 +299,25 @@ Here is an example output for `did:key`:
 
 ```json
 {
-    "seed": "z1AcNXDnko1P6QMiZ3bxsraNvVtRbpXKeE8GNLDXjBJ5UHz",
-    "decodedSeed": {...},
-    "did": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main",
-    "didDocument": {
-        "@context": [
-            "https://www.w3.org/ns/did/v1",
-            "https://w3id.org/security/suites/ed25519-2020/v1",
-            "https://w3id.org/security/suites/x25519-2020/v1"
-        ],
-        "id": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main",
-        "assertionMethod": [
-            {
-                "id": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main#z6MkfGZKFTyxiH9HgFUHbPQigEWh8PtFaRkESt9oQLiTvhVq",
-                "type": "Ed25519VerificationKey2020",
-                "controller": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main",
-                "publicKeyMultibase": "z6MkfGZKFTyxiH9HgFUHbPQigEWh8PtFaRkESt9oQLiTvhVq"
-            }
-        ]
-    }
+  "seed": "z1AcNXDnko1P6QMiZ3bxsraNvVtRbpXKeE8GNLDXjBJ5UHz",
+  "decodedSeed": "DecodedUint8ArraySeed",
+  "did": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main",
+  "didDocument": {
+    "@context": [
+      "https://www.w3.org/ns/did/v1",
+      "https://w3id.org/security/suites/ed25519-2020/v1",
+      "https://w3id.org/security/suites/x25519-2020/v1"
+    ],
+    "id": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main",
+    "assertionMethod": [
+      {
+        "id": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main#z6MkfGZKFTyxiH9HgFUHbPQigEWh8PtFaRkESt9oQLiTvhVq",
+        "type": "Ed25519VerificationKey2020",
+        "controller": "did:web:raw.githubusercontent.com:user-or-org:did-web-test:main",
+        "publicKeyMultibase": "z6MkfGZKFTyxiH9HgFUHbPQigEWh8PtFaRkESt9oQLiTvhVq"
+      }
+    ]
+  }
 }
 ```
 
@@ -369,7 +378,7 @@ For example:
 TENANT_SEED_ECON101=z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6
 ```
 
-The seed value is exactly the value of the `seed` property for the key you generated in the [Generate a new key](#generate-a-new-key) step, which from the `did:key` example in that section, would be:
+The seed value is exactly the value of the `seed` property for the key you generated in the [Generate New Key](#generate-new-key) step, which from the `did:key` example in that section, would be:
 
 ```
 "seed": "z1AjQUBZCNoiyPUC8zbbF29gLdZtHRqT6yPdFGtqJa5VfQ6"
@@ -464,7 +473,7 @@ These are the environment variables that you will need to configure in `.signing
 | --- | --- | --- | --- |
 | `TENANT_SEED_{TENANT_NAME}` | secret key deterministically associated with the issuer DID | string | yes |
 
-In addition to the variables defined above, you will also need to provide environment bindings for status related configurations in `.status-service.env`. Because there are two different implementations of a credential status manager - one for database storage and one for Git storage - you need to populate this file with different information, depending on which one you want to use. For the database solution, please define at least the required fields specified [here](https://github.com/digitalcredentials/status-service-db/blob/main/README.md#environment-variables) and for the Git solution, please define at least the required fields specified [here](https://github.com/digitalcredentials/status-service-git/blob/main/README.md#environment-variables).
+In addition to the variables defined above, you will also need to provide environment bindings for status related configurations in `.status-service-db.env` or `.status-service-git.env`. Because there are two different implementations of a credential status manager - one for database storage and one for Git storage - you need to populate the appropriate file, depending on which one you want to use. For the database solution, please define at least the required fields specified [here](https://github.com/digitalcredentials/status-service-db/blob/main/README.md#environment-variables) and for the Git solution, please define at least the required fields specified [here](https://github.com/digitalcredentials/status-service-git/blob/main/README.md#environment-variables).
 
 ### DID Registries
 
@@ -512,7 +521,7 @@ The important part there is the `credentialId`. If an issuer provides an `id` fi
 
 It is important that you save this value in your system during the issuance process, as you will need it to perform revocations and suspensions in the future. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the ID you need by searching the other fields like student name or student ID.
 
-**Note:** You'll of course have to enable [status updates](#enable-revocation-and-suspension) for this to work. If you've only done the Quick Start then you'll not be able to revoke and suspend.
+**Note:** You'll of course have to enable [status updates](#revocation-and-suspension) for this to work. If you've only done the Quick Start then you'll not be able to revoke and suspend.
 
 ## Learner Credential Wallet
 
@@ -520,9 +529,9 @@ You might now consider importing your new credential into the [Learner Credentia
 
 ## Development
 
-To run the `issuer-coordinator` locally from the cloned repository, you'll also have to clone the repository for the [signing-service](https://github.com/digitalcredentials/signing-service) and have it running locally at the same time. And, similarly, if you want to include status allocation, you'll also have to clone one of the status service repositories: [status-service-db](https://github.com/digitalcredentials/status-service-db), [status-service-git](https://github.com/digitalcredentials/status-service-git).
+To run the `issuer-coordinator` locally from the cloned repository, you'll also have to clone the repository for the [signing-service](https://github.com/digitalcredentials/signing-service) and have it running locally at the same time. Additionally, if you want to include status allocation, you'll also have to clone one of the status service repositories: [status-service-db](https://github.com/digitalcredentials/status-service-db), [status-service-git](https://github.com/digitalcredentials/status-service-git).
 
-When running locally, the system picks up environment variables from the standard [.env](./.env) file, rather than from the env files that we recommend using with Docker Compose.
+When running locally, the system picks up environment variables from the standard [.env](.env) file, rather than from the `.env` files that we recommend using with Docker Compose.
 
 ### Installation
 
