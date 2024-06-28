@@ -7,8 +7,8 @@ const randtomTenantToken = 'UNPROTECTED'
 const defaultTenantToken = 'UNPROTECTED'
 const demoTenantToken = 'UNPROTECTED'
 
-const defaultStatusServiceEndpoint = 'STATUS:4008'
-const defaultSigningServiceEndpoint = 'SIGNER:4006'
+const defaultSigningService = 'SIGNER:4006'
+const defaultStatusService = 'STATUS:4008'
 
 // we set a default tenant
 // It will be overwritten by whatever value is set for default in .env
@@ -40,8 +40,8 @@ function parseConfig () {
     enableHttpsForDev: env.ENABLE_HTTPS_FOR_DEV?.toLowerCase() === 'true',
     enableAccessLogging: env.ENABLE_ACCESS_LOGGING?.toLowerCase() === 'true',
     enableStatusService: env.ENABLE_STATUS_SERVICE?.toLowerCase() === 'true',
-    statusServiceEndpoint: env.STATUS_SERVICE_ENDPOINT ? env.STATUS_SERVICE_ENDPOINT : defaultStatusServiceEndpoint,
-    signingServiceEndpoint: env.SIGNING_SERVICE_ENDPOINT ? env.SIGNING_SERVICE_ENDPOINT : defaultSigningServiceEndpoint,
+    signingService: env.SIGNING_SERVICE ?? defaultSigningService,
+    statusService: env.STATUS_SERVICE ?? defaultStatusService,
     port: env.PORT ? parseInt(env.PORT) : defaultPort
   })
   return config

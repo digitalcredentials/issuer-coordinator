@@ -73,7 +73,8 @@ typings/
 .env.test
 .signing-service.env
 .coordinator.env
-.status-service.env
+.status-service-db.env
+.status-service-git.env
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
