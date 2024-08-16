@@ -13,6 +13,10 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 ## Table of Contents
 
 - [Summary](#summary)
+- [API](#api)
+  - [VC-API](#vc-api)
+  - [DID Generators](#did-generators)
+  - [healthz endpoint](#healthz-endpoint)
 - [Quick Start](#quick-start)
   - [Install Docker](#install-docker)
   - [Create Docker Compose File](#create-docker-compose-file)
@@ -32,6 +36,8 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 - [Usage](#usage)
   - [Issuing](#issuing)
   - [Revoking and Suspending](#revoking-and-suspending)
+- [Logging](#logging)
+- [Health Check](#health-check)
 - [Learner Credential Wallet](#learner-credential-wallet)
 - [Development](#development)
   - [Installation](#installation)
@@ -41,7 +47,7 @@ Note that you needn't clone this repository to use the issuer - you can simply r
 
 ## Summary
 
-Use this service to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/) with a [status](https://www.w3.org/TR/vc-bitstring-status-list/) that can later be updated to revoke or suspend the credential.
+Use this service to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/) with or without a [status](https://www.w3.org/TR/vc-bitstring-status-list/) that can later be updated to revoke or suspend the credential.
 
 Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) HTTP endpoints:
 
@@ -50,13 +56,14 @@ Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) HTTP endpoints:
 
 We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you.
 
-In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are wired together in a simple Docker Compose network that pulls images from Docker Hub.
+In particular, we've separated the discrete parts of an issuer into smaller self-contained apps that are consequently easier to understand and evaluate, and easier to *wire* together to compose functionality. The apps are typically wired together in a simple Docker Compose network that pulls images from Docker Hub.
 
-We've made installation a gradual process starting with a simple version that can be up and running in about five minutes, and then progressing with configuration as needed.
+We've made installation and evaluation a gradual process starting with a simple version that can be up and running in about five minutes, and then progressing with configuration as needed.
 
 ## Quick Start
 
-These four steps should take less than five minutes in total:
+These four steps should take less than five minutes, and will get you started with your own compose file. Alternatively, we've got a hosted compose file that makes things even a bit easier, the instructions for which are [here](https://github.com/digitalcredentials/docs/blob/main/deployment-guide/DCCDeploymentGuide.md#simple-signing-demo
+), but the quick start we now describe is pretty easy too.
 
 ### Install Docker
 
@@ -70,11 +77,11 @@ Create a file called `docker-compose.yml` and add the following:
 version: '3.5'
 services:
   coordinator:
-    image: digitalcredentials/issuer-coordinator:0.2.0
+    image: digitalcredentials/issuer-coordinator:0.3.0
     ports:
       - "4005:4005"
   signer:
-    image: digitalcredentials/signing-service:0.3.0
+    image: digitalcredentials/signing-service:0.4.0
 ```
 
 ### Run Service
@@ -203,7 +210,7 @@ NOTE: cURL can get a bit clunky if you want to experiment, so you might consider
 
 NOTE: Status updates are not enabled in the Quick Start. You've got to setup a couple of things to [enable revocation and suspension](#revocation-and-suspension).
 
-Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production).
+Great - you've issued a cryptographically signed credential. Now you'll want to configure the application to issue credentials signed with your own private key (the credential you just issued was signed with a test key that is freely shared so can't be used in production). First a quick word about versioning, and then on to configuration...
 
 ## Versioning
 
@@ -213,34 +220,90 @@ The images on Docker Hub will of course be updated to add new functionality and 
 
 We DO NOT provide a `latest` tag so you must provide a tag name (i.e, the version number) for the images in your Docker Compose file, as we've done [here](docker-compose.yml).
 
-To ensure you've got compatible versions of the services and the coordinator, the `major` number for each should match. At the time of writing, the versions for each are at `0.2.0`, and the `major` number (the leftmost number) agrees across all three.
+To ensure you've got compatible versions of the services and the coordinator, take a look at our [sample compose files](https://github.com/digitalcredentials/docs/blob/main/deployment-guide/DCCDeploymentGuide.md#docker-compose-examples).
 
 If you do ever want to work from the source code in the repository and build your own images, we've tagged the commits in GitHub that were used to build the corresponding Docker image. So a GitHub tag of `v0.1.0` coresponds to a Docker image tag of `0.1.0`.
 
 ## Configuration
 
-There are a few things you'll want to configure. These include, but may not be limited to:
-* Your signing keys, which enable only you to sign your credentials
-* Revocation/suspension support
-* "Multi-tenant" signing, which enables you to use different keys for different credentialing purposes (e.g., signing credentials for different courses)
+There are a few things you'll want to configure, in particular setting your own signing keys 
+(so that only you can sign your credentials). 
 
-The app is configured with three `.env` files (Note that you only need to configure one of the `.status-service-*.env` files, depending on if you are using the database status manager or the Git status manager):
+Other options include:
 
-* [.coordinator.env](.coordinator.env)
-* [.signing-service.env](.signing-service.env)
+* enabling revocation 
+* enabling healthchecks
+* allowing for 'multi-tenant' signing, which you might use, for example, to sign credentials for different courses with a different key.
+
+Because the issuer-coordinator coordinates calls to other microservices, you'll also nbeed to configure the microservices it calls. 
+Read about configuring the status-service in the [Enable Revocation](#enable-revocation) section and 
+read about configuring the signing-service in the [Add a Tenant](#add-a-tenant) section.
+
+You can set the environment variables in any of the usual ways that environment variables are set, including .env files or even setting the variables directly in the docker compose yaml file. Our quick start compose files, for example, all set the variables directly in the compose so as to make it possible to start up the compose with a single command. Further below we describe sample .env files for the coordinator and the dependent services.
+
+### Environment Variables
+
+The variables that can be configured specifically for the issuer-coordinator:
+
+| Key | Description | Default | Required |
+| --- | --- | --- | --- |
+| `PORT` | http port on which to run the express app | 4005 | no |
+| `ENABLE_HTTPS_FOR_DEV` | runs the dev server over https - ONLY FOR DEV - typically to allow CORS calls from a browser | false | no |
+| `TENANT_TOKEN_{TENANT_NAME}` | see [tenants](#tenants) section for instructions | no | no |
+| `ENABLE_ACCESS_LOGGING` | log all http calls to the service - see [Logging](#logging) | true | no |
+| `ERROR_LOG_FILE` | log file for all errors - see [Logging](#logging) | no | no |
+| `LOG_ALL_FILE` | log file for everything - see [Logging](#logging) | no | no |
+| `CONSOLE_LOG_LEVEL` | console log level - see [Logging](#logging) | silly | no |
+| `LOG_LEVEL` | log level for application - see [Logging](#logging) | silly | no |
+| `HEALTH_CHECK_SMTP_HOST` | SMTP host for unhealthy notification emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_SMTP_USER` | SMTP user for unhealthy notification emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_SMTP_PASS` | SMTP password for unhealthy notification emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_EMAIL_FROM` | name of email sender for unhealthy notifications emails - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_EMAIL_RECIPIENT` | recipient when unhealthy - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_EMAIL_SUBJECT` | email subject when unhealthy - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_WEB_HOOK` | posted to when unhealthy - see [Health Check](#health-check) | no | no |
+| `HEALTH_CHECK_SERVICE_URL` | local url for this service - see [Health Check](#health-check) | http://SIGNER:4006/healthz | no |
+| `HEALTH_CHECK_SERVICE_NAME` | service name to use in error messages - see [Health Check](#health-check) | SIGNING-SERVICE | no |
+| `ENABLE_STATUS_SERVICE` | whether to allocate status - see [Enable Revocation](#enable-revocation) | false | no |
+| `SIGNING_SERVICE` | endpoint for signing service | string | no (default: `SIGNER:4006`) |
+| `STATUS_SERVICE` | endpoint for status service | string | no (default: `STATUS:4008`) |
+
+The environment variables can be set directly in the docker compose using the ENV directive, or 
+alternatively within an .env file like this one:
+
+* [.coordinator.env](./.coordinator.env)
+
+You'll also need .env files for the signing and status services, something like so:
+
+* [.signing-service.env](./.signing-service.env)
 * [.status-service-db.env](.status-service-db.env) OR [.status-service-git.env](.status-service-git.env)
 
-If you've used the Quick Start `docker-compose.yml`, then you'll have to change it a bit to point at these files. Alternatively, we've pre-configured this [docker-compose.yml](docker-compose.yml), though, so you can just use that.
+(Note that you only need to configure one of the `.status-service-*.env` files, 
+depending on if you are using the database status manager or the Git status manager) because 
+there are two different implementations of a credential status manager - one for database 
+storage and one for Git storage - you need to populate the appropriate file, depending on 
+which one you want to use. For the database solution, please define at least the required 
+fields specified [here](https://github.com/digitalcredentials/status-service-db/blob/main/README.md#environment-variables) 
+and for the Git solution, please define at least the required fields specified 
+[here](https://github.com/digitalcredentials/status-service-git/blob/main/README.md#environment-variables).
+
+Note: the env variables for the status service and signing service are described below in the [Enable Revocation](#enable-revocation) and [Add a Tenant](#add-a-tenant) sections respectively.
+
+If you've used the QuickStart docker-compose.yml, then you'll have to change to point at these files. Alternatively, we've pre-configured this [docker-compose.yml](./docker-compose.yml), though, so you can just use that.
 
 The issuer is pre-configured with a default signing key for testing that can only be used for testing and evaluation. Any credentials signed with this key are meaningless because anyone else can use it to sign credentials, and so could create fake copies of your credentials which would appear to be properly signed. There would be no way to know that it was fake. So, you'll want to add our own key which you do by generating a new key and setting it for a new tenant name.
 
 ### Generate New Key
 
-To issue your own credentials, you must generate your own signing key and keep it private. At the moment, the issuer supports two [DID](https://www.w3.org/TR/did-core/) key formats/protocols: `did:key` and `did:web`.
+To issue your own credentials you must generate your own signing key and keep it private.  
+We've tried to make that a little easier by providing two endpoints in the signing-service that you 
+can use to generate a brand new random key - one using the did:key method and one using the did:web method. 
 
-The `did:key` DID is one of the simpler DID implementations and doesn't require that the DID document be hosted anywhere. However, many organizations are likely to prefer the `did:web` DID for production deployments. This DID format and protocol allows the owner to rotate (change) their signing key without having to update every credential that is signed by the old keys.
+The `did:key` DID is one of the simpler DID implementations and doesn't require that the DID document be hosted anywhere. However, many organizations are likely to prefer the `did:web` DID for production deployments. This DID format and protocol allows the owner to rotate (change) their signing key without having to update every credential that was signed by old keys.
 
-We've tried to simplify key generation by providing convenience endpoints in the issuer that you can use to generate a brand new key. You can generate a DID key with these cURL commands (in a terminal):
+You can hit the endpoints directly on the signing-service or if you've got your issuer-coordinator running, 
+you can hit the following convenience endpoints, which simply forward the request to the signer 
+(and return the result) with the following CURL commands (in a terminal):
 
 - `did:key`:
   ```bash
@@ -261,6 +324,8 @@ These commands will return a JSON document that contains the following data:
 - a secret seed
 - the corresponding DID
 - the corresponding DID document
+
+Again, both endpoints simply forward your call to the equivalent endpoint in the signing-service. You can read about the endpoints in the [Signing Key section of the signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator).
 
 Here is an example output for `did:key`:
 
@@ -323,11 +388,17 @@ Here is an example output for `did:key`:
 
 **\* Note:** For the `did:web` key, the value of `didDocument` needs to be hosted at `${DID_WEB_URL}/.well-known/did.json`, where `DID_WEB_URL` is the issuer controlled URL that was passed as the `url` field of the request body in the `did:web` cURL command above. In the example above, this URL is https://raw.githubusercontent.com/user-or-org/did-web-test/main, because we are using GitHub to host a DID document in a repo named `did-web-test`, owned by user/org `user-or-org`, at the path `/.well-known/did.json`. In a production deployment, this might be something like https://registrar.example.edu.
 
-Now that you've got your key, you'll want to enable it by adding a new tenant to use the seed.
+Now that you've got your key you'll need to do two things:
+
+* register it with the signing-service as a 'tenant'
+* enable it the issuer-coordinator, possibly with a token protecting it
+
+We describe both next...
 
 ### Tenants
 
-You might want to allow more than one signing key/DID to be used with the issuer. For example, you might want to sign university/college degree diplomas with a DID that is only used by the registrar, but also allow certificates for individual courses to be signed by different DIDS that are owned by the faculty or department or even the instructors that teach the courses.
+You might want to allow more than one signing key/DID to be used with the issuer. For example, you might 
+want to sign university/college degree diplomas with a DID that is only used by the registrar, but also allow certificates for individual courses to be signed by different DIDS that are owned by the faculty or department or even the instructors that teach the courses.
 
 We're calling these different signing authorities 'tenants'.
 
@@ -362,11 +433,16 @@ TENANT_TOKEN_ECON101=UNPROTECTED
 
 If you set a value other than `UNPROTECTED`, then that value must be included as a Bearer token in the Authorization header of any calls to the endpoint.
 
-We also suggest using IP filtering on your endpoints to only allow certain IPs to access the issuer. You can do this in Nginx or a similar server/traffic configuration tool.
+
+We also suggest using IP filtering on your endpoints to only allow set IPs to access the issuer.  You can set filters in Nginx or a similar server/traffic configuration tool.
 
 ##### .signing-service.env
 
-Add a line like:
+The [signing-service README](https://github.com/digitalcredentials/signing-service/blob/main/README.md#didkey-generator) explains how to set your DID for use by the signing service, whether using did:key or did:web. 
+
+Note that the signing-service docs describe using convenience endpoints to generate new DIDs. You can call those endpoints directly in the signing-service, or call the same endpoints in the issuer-coordinator, as described above in the [Generate a new key section](#generate-a-new-key). The coordinator endpoints simply forward the request to the signing-service.
+
+In short, add a line like the following to your .signing-service.env (or any other place you'd like to set your env variables):
 
 ```
 TENANT_SEED_{TENANT_NAME}={SEED}
@@ -453,33 +529,11 @@ The issuer provides an optional revocation/suspension mechanism that implements 
 
 To enable status updates, set `ENABLE_STATUS_SERVICE` to `true` in `.coordinator.env`. To perform revocations and suspensions, see the [Usage - Revoking and Suspending](#revoking-and-suspending) section below.
 
-### Environment Variables
-
-These are all of the general environment variables that you will need to configure in `.coordinator.env`:
-
-| Key | Description | Type | Required |
-| --- | --- | --- | --- |
-| `SIGNING_SERVICE` | domain of signing service | string | no (default: `SIGNER:4006`) |
-| `STATUS_SERVICE` | domain of status service | string | no (default: `STATUS:4008`) |
-| `TENANT_TOKEN_{TENANT_NAME}` | HTTP authorization bearer token to secure service endpoint access for a given tenant | string | yes |
-| `PORT` | HTTP port on which to run the express app | number | no (default: `4005`) |
-| `ENABLE_ACCESS_LOGGING` | whether to enable access logging | boolean | no (default: `true`) |
-| `ENABLE_STATUS_SERVICE` | whether to enable status | boolean | no (default: `true`) |
-| `ENABLE_HTTPS_FOR_DEV` | whether to enable HTTPS in a development instance of the app | boolean | no (default: `true`) |
-
-These are the environment variables that you will need to configure in `.signing-service.env`:
-
-| Key | Description | Type | Required |
-| --- | --- | --- | --- |
-| `TENANT_SEED_{TENANT_NAME}` | secret key deterministically associated with the issuer DID | string | yes |
-
-In addition to the variables defined above, you will also need to provide environment bindings for status related configurations in `.status-service-db.env` or `.status-service-git.env`. Because there are two different implementations of a credential status manager - one for database storage and one for Git storage - you need to populate the appropriate file, depending on which one you want to use. For the database solution, please define at least the required fields specified [here](https://github.com/digitalcredentials/status-service-db/blob/main/README.md#environment-variables) and for the Git solution, please define at least the required fields specified [here](https://github.com/digitalcredentials/status-service-git/blob/main/README.md#environment-variables).
-
 ### DID Registries
 
-To know that a credential was signed with a key that is in fact owned by the claimed issuer, the key (encoded as a [DID](https://www.w3.org/TR/did-core/)) has to be confirmed as really belonging to that issuer. This is typically done by adding the DID to a well known registry that the verifier checks when verifying a credential.
+To know that a credential was signed with a key that is in fact owned by the claimed issuer, the key (encoded as a [DID](https://www.w3.org/TR/did-core/)) has to be confirmed as really belonging to that issuer.  This is typically done by adding the [DID](https://www.w3.org/TR/did-core/) to a well known registry that the verifier checks when verifying a credential.
 
-The DCC provides a number of registries that work with the verifiers in the [Learner Credential Wallet (LCW)](#learner-credential-wallet) and in the online web based [Verifier Plus](https://verifierplus.org). The DCC registries use GitHub for storage. To request that your DID be added to a registry, submit a pull request in which you've added your [DID](https://www.w3.org/TR/did-core/) to the registry file.
+The DCC provides a number of registries that work with the verifiers in the [Learner Credential Wallet (LCW)](#learner-credential-wallet) and in the online web based [Verifier Plus](https://verifierplus.org).  The DCC registries use Github for storage.  To request that your DID be added to a registry, submit a pull request in which you've added your [DID](https://www.w3.org/TR/did-core/) to the registry file.
 
 ## Usage
 
@@ -522,6 +576,90 @@ The important part there is the `credentialId`. If an issuer provides an `id` fi
 It is important that you save this value in your system during the issuance process, as you will need it to perform revocations and suspensions in the future. A common approach might be to add another column to whatever local database you are using for your credential records, which would then later make it easier for you to find the ID you need by searching the other fields like student name or student ID.
 
 **Note:** You'll of course have to enable [status updates](#revocation-and-suspension) for this to work. If you've only done the Quick Start then you'll not be able to revoke and suspend.
+
+### API
+
+#### VC-API
+
+This app implements two [VC-API](https://w3c-ccg.github.io/vc-api/) http endpoints:
+
+ * [POST /credentials/issue](https://w3c-ccg.github.io/vc-api/#issue-credential)
+ * [POST /credentials/status](https://w3c-ccg.github.io/vc-api/#update-status)
+
+The hope is that by following the VC-API spec, you should be able to substitute any implementation of the spec, thereby allowing you to later switch implementations and/or vendors.
+
+#### DID Generators
+
+The app additionally two utility endpoints for generating new [DIDs](https://www.w3.org/TR/did-core/):
+
+ * [GET /did-key-generator](#didkey)
+ * [POST /did-web-generator](#didweb)
+
+#### healthz endpoint
+
+and finally an endpoint that returns the health of the service, and is typically meant to be used with Docker [HEALTHCHECK](https://docs.docker.com/reference/dockerfile/#healthcheck):
+
+ * [GET /heathz]()
+
+## Logging
+
+We support the following log levels:
+
+```
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  verbose: 4,
+  debug: 5,
+  silly: 6
+```
+
+Logging is configured with environment variables, as defined in the [Environment Variables](#environment-variables) section.
+
+By default, everything is logged to the console (log level `silly`).
+
+All http calls to the service are logged by default, which might bloat the log. You can disable access logging with:
+
+```ENABLE_ACCESS_LOGGING=false```
+
+You may set the log level for the application as whole, e.g.,
+
+```LOG_LEVEL=http```
+
+Which would only log messages with severity 'http' and all below it (info, warn, error).
+
+The default is to log everything (level 'silly').
+
+You can also set the log level for console logging, e.g.,
+
+```CONSOLE_LOG_LEVEL=debug```
+
+This would log everything for severity 'debug' and lower (i.e., verbose, http, info, warn, error). This of course assumes that you've set the log level for the application as a whole to at least the same level.
+
+The default log level for the console is 'silly', which logs everything.
+
+There are also two log files that can be enabled:
+
+* errors (only logs errors)
+* all (logs everything - all log levels)
+
+Enable each log by setting an env variable for each, indicating the path to the appropriate file, like this example:
+
+```
+LOG_ALL_FILE=logs/all.log
+ERROR_LOG_FILE=logs/error.log
+
+## Health Check
+
+Docker has a [HEALTHCHECK](https://docs.docker.com/reference/dockerfile/#healthcheck) option for monitoring the
+state (health) of a container. We've included an endpoint `GET /healthz` that checks the health of the signing service (by running a test signature). The endpoint can be directly specified in a CURL or WGET call on the HEALTHCHECK, but we also provide a [healthcheck.js](./healthcheck.js) function that can be similarly invoked by the HEALTHCHECK and which itself hits the `healthz` endpoint, and additionally provides options for both email and Slack notifications when the service is unhealthy. 
+
+You can see how we've configured the HEALTHCHECK in our [example compose files](https://github.com/digitalcredentials/docs/blob/main/deployment-guide/DCCDeploymentGuide.md#docker-compose-examples). Our compose files also include an example of how to use [autoheal](https://github.com/willfarrell/docker-autoheal) together with HEALTHCHECK to restart an unhealthy container.
+
+If you want failing health notifications sent to a Slack channel, you'll have to set up a Slack [web hook](https://api.slack.com/messaging/webhooks).
+
+If you want failing health notifications sent to an email address, you'll need an SMTP server to which you can send emails, so something like sendgrid, mailchimp, mailgun, or even your own email account if it allows direct SMTP sends. Gmail can apparently be configured to so so.
 
 ## Learner Credential Wallet
 

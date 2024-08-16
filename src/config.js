@@ -1,6 +1,8 @@
 let CONFIG
 const defaultPort = 4005
-const defaultTenantName = 'test'
+const defaultConsoleLogLevel = 'silly'
+const defaultLogLevel = 'silly'
+export const defaultTenantName = 'test'
 const demoTenantName = 'testing'
 const randomTenantName = 'random'
 const randtomTenantToken = 'UNPROTECTED'
@@ -39,6 +41,10 @@ function parseConfig () {
   const config = Object.freeze({
     enableHttpsForDev: env.ENABLE_HTTPS_FOR_DEV?.toLowerCase() === 'true',
     enableAccessLogging: env.ENABLE_ACCESS_LOGGING?.toLowerCase() === 'true',
+    consoleLogLevel: env.CONSOLE_LOG_LEVEL?.toLocaleLowerCase() || defaultConsoleLogLevel,
+    logLevel: env.LOG_LEVEL?.toLocaleLowerCase() || defaultLogLevel,
+    errorLogFile: env.ERROR_LOG_FILE,
+    logAllFile: env.LOG_ALL_FILE,
     enableStatusService: env.ENABLE_STATUS_SERVICE?.toLowerCase() === 'true',
     signingService: env.SIGNING_SERVICE ?? defaultSigningService,
     statusService: env.STATUS_SERVICE ?? defaultStatusService,

@@ -6,7 +6,8 @@ import errorHandler from './middleware/errorHandler.js'
 import errorLogger from './middleware/errorLogger.js'
 import invalidPathHandler from './middleware/invalidPathHandler.js'
 import verifyAuthHeader from './verifyAuthHeader.js'
-import { getConfig } from './config.js'
+import { getConfig, defaultTenantName } from './config.js'
+import { getUnsignedVC } from './test-fixtures/vc.js'
 
 class IssuingException extends Error {
   constructor (code, message, error = null) {
@@ -35,6 +36,21 @@ export async function build (opts = {}) {
   app.use(express.json())
   app.use(express.urlencoded({ extended: false }))
   app.use(cors())
+
+  app.get('/healthz', async function (req, res) {
+    try {
+      const endpoint = `${req.protocol}://${req.headers.host}/instance/${defaultTenantName}/credentials/issue`
+      const { data } = await axios.post(endpoint, getUnsignedVC())
+      if (!data.proof) { throw new IssuingException(503, 'issuer-coordinator healthz failed') }
+    } catch (e) {
+      console.log(`exception in healthz: ${JSON.stringify(e)}`)
+      return res.status(503).json({
+        error: `issuer-coordinator healthz check failed with error: ${e}`,
+        healthy: false
+      })
+    }
+    res.send({ message: 'issuer-coordinator server status: ok.', healthy: true })
+  })
 
   app.get('/', async function (req, res, next) {
     if (enableStatusService) {

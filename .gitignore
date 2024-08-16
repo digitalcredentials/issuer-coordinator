@@ -109,3 +109,8 @@ dist
 
 # vscode
 .vscode
+
+compose-test.yaml
+compose.yaml
+compose-health-test.yaml
+.env.healthcheck.testing
