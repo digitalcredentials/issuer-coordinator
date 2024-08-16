@@ -11,6 +11,8 @@ services:
     env_file:
       - ./.signing-service.env
   status:
-    image: digitalcredentials/status-service:0.1.0
+    image: digitalcredentials/status-service-db:0.1.0
+    # image: digitalcredentials/status-service-git:0.1.0
     env_file:
-      - ./.status-service.env
+      - ./.status-service-db.env
+      # - ./.status-service-git.env
