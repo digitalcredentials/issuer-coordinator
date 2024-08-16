@@ -39,10 +39,8 @@ export async function build (opts = {}) {
 
   app.get('/healthz', async function (req, res) {
     try {
-      const { data } = await axios.post(
-        `${req.protocol}://${req.headers.host}/instance/${defaultTenantName}/credentials/issue`,
-        getUnsignedVC()
-      )
+      const endpoint = `${req.protocol}://${req.headers.host}/instance/${defaultTenantName}/credentials/issue`
+      const { data } = await axios.post(endpoint, getUnsignedVC())
       if (!data.proof) { throw new IssuingException(503, 'issuer-coordinator healthz failed') }
     } catch (e) {
       console.log(`exception in healthz: ${JSON.stringify(e)}`)
