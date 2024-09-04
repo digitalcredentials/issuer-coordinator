@@ -133,6 +133,20 @@ export async function build (opts = {}) {
       }
     })
 
+  app.get('/status/:statusCredentialId', async function (req, res, next) {
+    const statusCredentialId = req.params.statusCredentialId
+    try {
+      const { data: statusCredential } = await axios.get(`http://${statusService}/${statusCredentialId}`)
+      return res.status(200).json(statusCredential)
+    } catch (error) {
+      next({
+        message: error.message,
+        code: error.code
+      })
+    }
+    return res.status(200).send({ message: 'status service is not configured.' })
+  })
+
   // Attach the error handling middleware calls, in order they should run
   app.use(errorLogger)
   app.use(errorHandler)

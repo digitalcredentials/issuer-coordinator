@@ -1,2 +1,5 @@
 **/*.env
 node_modules
+compose-health-test.yaml
+compose-v2-test.yaml
+.env.healthcheck.testing
