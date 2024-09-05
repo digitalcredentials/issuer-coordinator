@@ -134,6 +134,7 @@ export async function build (opts = {}) {
     })
 
   app.get('/status/:statusCredentialId', async function (req, res, next) {
+    if (!enableStatusService) return res.status(405).send('The status service has not been enabled.')
     const statusCredentialId = req.params.statusCredentialId
     try {
       const { data: statusCredential } = await axios.get(`http://${statusService}/${statusCredentialId}`)
@@ -144,7 +145,7 @@ export async function build (opts = {}) {
         code: error.code
       })
     }
-    return res.status(200).send({ message: 'status service is not configured.' })
+    return res.status(500).send({ message: 'Server error.' })
   })
 
   // Attach the error handling middleware calls, in order they should run
