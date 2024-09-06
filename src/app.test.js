@@ -7,6 +7,8 @@ import protectedNock from './test-fixtures/nocks/protected_status_signing.js'
 import unprotectedStatusUpdateNock from './test-fixtures/nocks/unprotected_status_update.js'
 import unknownStatusIdNock from './test-fixtures/nocks/unknown_status_id_nock.js'
 import protectedStatusUpdateNock from './test-fixtures/nocks/protected_status_update.js'
+import unknownStatusListNock from './test-fixtures/nocks/unknown_status_list_nock.js'
+import statusListNock from './test-fixtures/nocks/status_list_nock.js'
 
 import { build } from './app.js'
 
@@ -225,6 +227,27 @@ describe('api', () => {
 
       expect(response.header['content-type']).to.have.string('json')
       expect(response.status).to.equal(200)
+    })
+  })
+
+  describe('GET /status/:statusCredentialId', () => {
+    it('returns 404 for unknown status credential id', async () => {
+      unknownStatusListNock()
+      const response = await request(app)
+        .get('/status/9898u')
+      expect(response.header['content-type']).to.have.string('json')
+      expect(response.status).to.equal(404)
+    })
+
+    it('returns credential status list from status service', async () => {
+      statusListNock()
+      const response = await request(app)
+        .get('/status/slAwJe6GGR6mBojlGW5U')
+      expect(response.header['content-type']).to.have.string('json')
+      expect(response.status).to.equal(200)
+      const returnedList = JSON.parse(JSON.stringify(response.body))
+      // this proof value comes from the nock:
+      expect(returnedList.proof.proofValue).to.equal('z4y3GawinQg1aCqbYqZM8dmDpbmtFa3kE6tFefdXvLi5iby25dvmVwLNZrfcFPyhpshrhCWB76pdSZchVve3K1Znr')
     })
   })
 })
