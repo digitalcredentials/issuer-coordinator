@@ -45,8 +45,15 @@ Use this service to issue [Verifiable Credentials](https://www.w3.org/TR/vc-data
 
 Implements two [VC-API](https://w3c-ccg.github.io/vc-api/) HTTP endpoints:
 
+
  * [POST /credentials/issue](https://w3c-ccg.github.io/vc-api/#issue-credential)
  * [POST /credentials/status](https://w3c-ccg.github.io/vc-api/#update-status)
+
+Also implements an endpoint that returns a status list if the underlying status service itself returns the list - essentially then just acts as a public proxy within the docker compose, forwarding the request for the list to the status service and returning the result. For the moment, our [mongo-backed status service](https://github.com/digitalcredentials/status-service-db) is the only status service (we know of) that returns a list. The endpoint then is:
+
+  * [POST /status/:listId](https://w3c-ccg.github.io/vc-api/#update-status)
+
+Where the :listId is the identifier of the list
 
 We've tried hard to make this simple to install and maintain, and correspondingly easy to evaluate and understand as you consider whether digital credentials are useful for your project, and whether this issuer would work for you.
 
@@ -95,7 +102,7 @@ curl --location 'http://localhost:4005/instance/test/credentials/issue' \
 --data-raw '{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.2.json"
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
   ],
   "id": "urn:uuid:2fe53dc9-b2ec-4939-9b2c-0d00f6663b6c",
   "type": [
@@ -145,7 +152,7 @@ This should return a fully formed and signed credential printed to the terminal,
 {
     "@context": [
         "https://www.w3.org/ns/credentials/v2",
-        "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.2.json",
+        "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
         "https://w3id.org/security/suites/ed25519-2020/v1"
     ],
     "id": "urn:uuid:2fe53dc9-b2ec-4939-9b2c-0d00f6663b6c",
@@ -403,7 +410,7 @@ curl --location 'http://localhost:4005/instance/econ101/credentials/issue' \
 --data-raw '{
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
-    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.2.json"
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
   ],
   "id": "urn:uuid:2fe53dc9-b2ec-4939-9b2c-0d00f6663b6c",
   "type": [
