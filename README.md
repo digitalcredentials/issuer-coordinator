@@ -77,11 +77,11 @@ Create a file called `docker-compose.yml` and add the following:
 version: '3.5'
 services:
   coordinator:
-    image: digitalcredentials/issuer-coordinator:0.2.0
+    image: digitalcredentials/issuer-coordinator:1.0.0
     ports:
       - "4005:4005"
   signer:
-    image: digitalcredentials/signing-service:0.3.0
+    image: digitalcredentials/signing-service:1.0.0
 ```
 
 ### Run Service
