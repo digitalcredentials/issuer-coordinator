@@ -86,8 +86,9 @@ export async function build (opts = {}) {
       try {
         const tenantName = req.params.tenantName // the issuer instance/tenant with which to sign
         const authHeader = req.headers.authorization
-        const unSignedVC = req.body
-
+        const body = req.body
+        const unSignedVC = body.credential ? body.credential : body
+    
         await verifyAuthHeader(authHeader, tenantName)
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
         if (!unSignedVC || !Object.keys(unSignedVC).length) throw new IssuingException(400, 'A verifiable credential must be provided in the body')
@@ -95,7 +96,7 @@ export async function build (opts = {}) {
           ? await callService(`http://${statusService}/credentials/status/allocate`, unSignedVC)
           : unSignedVC
         const signedVC = await callService(`http://${signingService}/instance/${tenantName}/credentials/sign`, vcWithStatus)
-        return res.json(signedVC)
+        return res.status(201).json(signedVC)
       } catch (error) {
         // have to catch async errors and forward error handling
         // middleware
