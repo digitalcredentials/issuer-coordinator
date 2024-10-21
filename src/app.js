@@ -22,6 +22,10 @@ async function callService (endpoint, body) {
   return data
 }
 
+function isNotValidVC(unSignedVC) {
+  return !unSignedVC || !Object.keys(unSignedVC).length || !unSignedVC.credentialSubject
+}
+
 export async function build (opts = {}) {
   const {
     enableStatusService,
@@ -88,10 +92,10 @@ export async function build (opts = {}) {
         const authHeader = req.headers.authorization
         const body = req.body
         const unSignedVC = body.credential ? body.credential : body
-    
+    422
         await verifyAuthHeader(authHeader, tenantName)
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
-        if (!unSignedVC || !Object.keys(unSignedVC).length) throw new IssuingException(400, 'A verifiable credential must be provided in the body')
+        if (isNotValidVC(unSignedVC)) throw new IssuingException(422, 'A verifiable credential must be provided in the body')
         const vcWithStatus = enableStatusService
           ? await callService(`http://${statusService}/credentials/status/allocate`, unSignedVC)
           : unSignedVC
