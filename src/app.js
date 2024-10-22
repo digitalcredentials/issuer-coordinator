@@ -22,8 +22,15 @@ async function callService (endpoint, body) {
   return data
 }
 
+function isArrayOfStrings(arrayToCheck) {
+  return arrayToCheck && Array.isArray(arrayToCheck) && arrayToCheck.length && arrayToCheck.every(item=> {return (item && typeof item == "string")})
+}
+
 function isNotValidVC (unSignedVC) {
-  return !unSignedVC || !Object.keys(unSignedVC).length || !unSignedVC.credentialSubject
+  if (!unSignedVC) return true;
+  const isContextPropertyValid = isArrayOfStrings(unSignedVC['@context'])
+  const isTypePropertyValid = isArrayOfStrings(unSignedVC.type)
+  return ! (isContextPropertyValid && isTypePropertyValid) 
 }
 
 export async function build (opts = {}) {
@@ -94,7 +101,7 @@ export async function build (opts = {}) {
         const unSignedVC = body.credential ? body.credential : body
         await verifyAuthHeader(authHeader, tenantName)
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
-        if (isNotValidVC(unSignedVC)) throw new IssuingException(422, 'A verifiable credential must be provided in the body')
+        if (isNotValidVC(unSignedVC)) throw new IssuingException(422, 'A valid verifiable credential must be provided')
         const vcWithStatus = enableStatusService
           ? await callService(`http://${statusService}/credentials/status/allocate`, unSignedVC)
           : unSignedVC
