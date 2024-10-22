@@ -64,12 +64,12 @@ describe('api', () => {
   })
 
   describe('POST /instance/:instanceId/credentials/issue', () => {
-    it('returns 400 if no body', done => {
+    it('returns 422 if no body', done => {
       request(app)
         .post('/instance/protected_test/credentials/issue')
         .set('Authorization', `Bearer ${testTenantToken}`)
         .expect('Content-Type', /json/)
-        .expect(400, done)
+        .expect(422, done)
     })
 
     it('returns 401 if tenant token is missing from auth header', done => {
@@ -88,7 +88,7 @@ describe('api', () => {
         .send(getUnsignedVC())
 
       expect(response.header['content-type']).to.have.string('json')
-      expect(response.status).to.equal(200)
+      expect(response.status).to.equal(201)
       expect(response.body)
     })
 
@@ -137,7 +137,7 @@ describe('api', () => {
         .send(sentCred)
 
       expect(response.header['content-type']).to.have.string('json')
-      expect(response.status).to.equal(200)
+      expect(response.status).to.equal(201)
 
       const returnedCred = JSON.parse(JSON.stringify(response.body))
       // this proof value comes from the nock:
