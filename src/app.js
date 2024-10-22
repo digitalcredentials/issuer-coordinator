@@ -22,15 +22,15 @@ async function callService (endpoint, body) {
   return data
 }
 
-function isArrayOfStrings(arrayToCheck) {
-  return arrayToCheck && Array.isArray(arrayToCheck) && arrayToCheck.length && arrayToCheck.every(item=> {return (item && typeof item == "string")})
+function isArrayOfStrings (arrayToCheck) {
+  return arrayToCheck && Array.isArray(arrayToCheck) && arrayToCheck.length && arrayToCheck.every(item => { return (item && typeof item === 'string') })
 }
 
 function isNotValidVC (unSignedVC) {
-  if (!unSignedVC) return true;
+  if (!unSignedVC) return true
   const isContextPropertyValid = isArrayOfStrings(unSignedVC['@context'])
   const isTypePropertyValid = isArrayOfStrings(unSignedVC.type)
-  return ! (isContextPropertyValid && isTypePropertyValid) 
+  return !(isContextPropertyValid && isTypePropertyValid)
 }
 
 export async function build (opts = {}) {
