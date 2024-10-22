@@ -23,14 +23,15 @@ async function callService (endpoint, body) {
 }
 
 function isArrayOfStrings (arrayToCheck) {
-  return arrayToCheck && Array.isArray(arrayToCheck) && arrayToCheck.length && arrayToCheck.every(item => { return (item && typeof item === 'string') })
+  return (arrayToCheck != null) && Array.isArray(arrayToCheck) && arrayToCheck.length && arrayToCheck.every(item => { return (item && typeof item === 'string') })
 }
 
-function isNotValidVC (unSignedVC) {
-  if (!unSignedVC) return true
+function isValidVC (unSignedVC) {
+  if (!unSignedVC) return false
   const isContextPropertyValid = isArrayOfStrings(unSignedVC['@context'])
   const isTypePropertyValid = isArrayOfStrings(unSignedVC.type)
-  return !(isContextPropertyValid && isTypePropertyValid)
+  const isIssuerPropertyValid = (unSignedVC.issuer != null) && !Array.isArray(unSignedVC.issuer) && (typeof unSignedVC.issuer === 'string' || typeof unSignedVC.issuer === 'object')
+  return (isContextPropertyValid && isTypePropertyValid && isIssuerPropertyValid)
 }
 
 export async function build (opts = {}) {
@@ -101,7 +102,7 @@ export async function build (opts = {}) {
         const unSignedVC = body.credential ? body.credential : body
         await verifyAuthHeader(authHeader, tenantName)
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
-        if (isNotValidVC(unSignedVC)) throw new IssuingException(422, 'A valid verifiable credential must be provided')
+        if (!isValidVC(unSignedVC)) throw new IssuingException(422, 'A valid verifiable credential must be provided')
         const vcWithStatus = enableStatusService
           ? await callService(`http://${statusService}/credentials/status/allocate`, unSignedVC)
           : unSignedVC
