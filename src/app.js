@@ -31,7 +31,8 @@ function isValidVC (unSignedVC) {
   const isContextPropertyValid = isArrayOfStrings(unSignedVC['@context'])
   const isTypePropertyValid = isArrayOfStrings(unSignedVC.type)
   const isIssuerPropertyValid = (unSignedVC.issuer != null) && !Array.isArray(unSignedVC.issuer) && (typeof unSignedVC.issuer === 'string' || typeof unSignedVC.issuer === 'object')
-  return (isContextPropertyValid && isTypePropertyValid && isIssuerPropertyValid)
+  const isCredentialSubjectPropertyValid = (unSignedVC.credentialSubject != null) && !Array.isArray(unSignedVC.credentialSubject) && (typeof unSignedVC.credentialSubject === 'object')
+  return (isContextPropertyValid && isTypePropertyValid && isIssuerPropertyValid && isCredentialSubjectPropertyValid)
 }
 
 export async function build (opts = {}) {
