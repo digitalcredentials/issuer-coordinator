@@ -22,6 +22,19 @@ async function callService (endpoint, body) {
   return data
 }
 
+function isArrayOfStrings (arrayToCheck) {
+  return (arrayToCheck != null) && Array.isArray(arrayToCheck) && arrayToCheck.length && arrayToCheck.every(item => { return (item && typeof item === 'string') })
+}
+
+function isValidVC (unSignedVC) {
+  if (!unSignedVC) return false
+  const isContextPropertyValid = isArrayOfStrings(unSignedVC['@context'])
+  const isTypePropertyValid = isArrayOfStrings(unSignedVC.type)
+  const isIssuerPropertyValid = (unSignedVC.issuer != null) && !Array.isArray(unSignedVC.issuer) && (typeof unSignedVC.issuer === 'string' || typeof unSignedVC.issuer === 'object')
+  const isCredentialSubjectPropertyValid = (unSignedVC.credentialSubject != null) && !Array.isArray(unSignedVC.credentialSubject) && (typeof unSignedVC.credentialSubject === 'object')
+  return (isContextPropertyValid && isTypePropertyValid && isIssuerPropertyValid && isCredentialSubjectPropertyValid)
+}
+
 export async function build (opts = {}) {
   const {
     enableStatusService,
@@ -86,16 +99,16 @@ export async function build (opts = {}) {
       try {
         const tenantName = req.params.tenantName // the issuer instance/tenant with which to sign
         const authHeader = req.headers.authorization
-        const unSignedVC = req.body
-
+        const body = req.body
+        const unSignedVC = body.credential ? body.credential : body
         await verifyAuthHeader(authHeader, tenantName)
         // NOTE: we throw the error here which will then be caught by middleware errorhandler
-        if (!unSignedVC || !Object.keys(unSignedVC).length) throw new IssuingException(400, 'A verifiable credential must be provided in the body')
+        if (!isValidVC(unSignedVC)) throw new IssuingException(422, 'A valid verifiable credential must be provided')
         const vcWithStatus = enableStatusService
           ? await callService(`http://${statusService}/credentials/status/allocate`, unSignedVC)
           : unSignedVC
         const signedVC = await callService(`http://${signingService}/instance/${tenantName}/credentials/sign`, vcWithStatus)
-        return res.json(signedVC)
+        return res.status(201).json(signedVC)
       } catch (error) {
         // have to catch async errors and forward error handling
         // middleware
